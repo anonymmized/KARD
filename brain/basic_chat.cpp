@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <nlohmann/json.hpp>
@@ -13,26 +12,38 @@ int term_width() {
     return 80;
 }
 
-
-int main() {
-    int width = term_width();
+std::string doRequest(std::string& request) {
     nlohmann::json body = {
-        {"model", "llama3.2:1b"},
-        {"prompt", "Why is the sky blue?"},
+        {"model", "qwen2.5:3b"},
+        {"messages", {
+            {{"role","system"},{"content","You're a KARD. Answer short and strict."}},
+            {{"role","user"},{"content", request}}
+        }},
+        {"options", {
+            {"temperature", 0.3},
+            {"top_p", 0.9},
+            {"num_predict", 120}
+        }},
         {"stream", false}
     };
-    cpr::Response r = cpr::Post(
-        cpr::Url{"http://localhost:11434/api/generate"},
+    cpr::Response resp = cpr::Post(
+        cpr::Url{"http://localhost:11434/api/chat"},
         cpr::Body{body.dump()},
         cpr::Header{{"Content-Type", "application/json"}}
     );
-    if (r.status_code != 200) {
-        std::cout << "Bad connection\n";
-        return 1;
+    if (resp.status_code != 200) { return "It seems an error)\n"; }
+    auto reply = nlohmann::json::parse(resp.text);
+    //std::cout << "STATUS: " << resp.status_code << '\n';
+    //std::cout << "RAW: " << resp.text << '\n';
+    return reply["message"]["content"];
+}
+
+int main() {
+    std::string request;
+    while (std::getline(std::cin, request)) {
+        if (request == "/exit") break;
+        if (request.empty()) continue;
+        std::cout << doRequest(request) << '\n';
     }
-    auto reply = nlohmann::json::parse(r.text);
-    std::string answer = reply["response"];
-    std::cout << std::setw(width/2) << "Why is the sky blue?\n";
-    std::cout << answer;
     return 0;
 }
