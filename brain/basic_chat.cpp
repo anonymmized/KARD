@@ -6,55 +6,69 @@
 #include <unistd.h>
 #include <vector>
 #include <sys/ioctl.h>
+#include <fstream>
 
-int term_width() {
-    struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) return w.ws_col;
-    return 80;
-}
+class IBrain {
+    public:
+        virtual ~IBrain() = default;
+        virtual std::string ask(const std::string& request) = 0;
 
-nlohmann::json getBody(std::string& request, std::vector<nlohmann::json>& base) {
-    nlohmann::json messages = nlohmann::json::array();
-    messages.push_back({{"role", "system"},{"content", "You're a KARD. Answer short and strict."}});
-    for (const auto& m : base) messages.push_back(m);
-    return {
-        {"model", "qwen2.5:3b"},
-        {"messages", messages},
-        {"options", {
-            {"temperature", 0.3},
-            {"top_p", 0.9},
-            {"num_predict", 120}
-        }},
-        {"stream", false}
-    };
-}
+};
 
-nlohmann::json doRequest(nlohmann::json& body) {
-    cpr::Response resp = cpr::Post(
-        cpr::Url{"http://localhost:11434/api/chat"},
-        cpr::Body{body.dump()},
-        cpr::Header{{"Content-Type", "application/json"}}
-    );
-    if (resp.status_code != 200) { return "It seems an error)\n"; }
-    auto reply = nlohmann::json::parse(resp.text);
-    //std::cout << "STATUS: " << resp.status_code << '\n';
-    //std::cout << "RAW: " << resp.text << '\n';
-    nlohmann::json body_reply = {{"role", reply["message"]["role"]},{"content", reply["message"]["content"]}};
-    return body_reply;
-}
+class OllamaBrain : public IBrain {
+    private:
+        std::string url = "http://localhost:11434/api/chat";
+        std::vector<nlohmann::json> base;
+        nlohmann::json json_config;
+        void uploadConfig() {
+            std::ifstream in("config.json");
+            if (!in.is_open()) {
+                std::cerr << "Unable to open config file\n";
+                return;
+            }
+            in >> json_config;
+            in.close();
+
+        }
+        nlohmann::json getBody(const std::string& request) {
+            nlohmann::json messages = nlohmann::json::array();
+            uploadConfig();
+            messages.push_back({{"role", "system"},{"content", json_config["system_prompt"]}});
+            for (const auto& m : base) messages.push_back(m);
+            json_config.push_back({"messages",messages});
+            return json_config;
+        }
+    public:
+        OllamaBrain(std::vector<nlohmann::json>& _base) : base(_base) {}
+        std::string ask(const std::string& request) {
+            base.push_back({{"role", "user"},{"content", request}});
+            nlohmann::json body = getBody(request);
+
+            cpr::Response resp = cpr::Post(
+                cpr::Url(url),
+                cpr::Body{body.dump()},
+                cpr::Header{{"Content-Type", "application/json"}}
+            );
+
+            if (resp.status_code != 200) { return "It seems an error)\n"; }
+
+            auto reply = nlohmann::json::parse(resp.text);
+            base.push_back({{"role", reply["message"]["role"]},{"content", reply["message"]["content"]}});
+            return reply["message"]["content"].get<std::string>();
+        }
+};
 
 int main() {
     std::vector<nlohmann::json> chat_base;
+    OllamaBrain ollama(chat_base);
+    IBrain& brain = ollama;
     std::string request;
     std::cout << "user: ";
     while (std::getline(std::cin, request)) {
         if (request == "/exit") break;
         if (request.empty()) continue;
-        chat_base.push_back({{"role","user"},{"content",request}});
-        nlohmann::json body = getBody(request, chat_base);
-        nlohmann::json body_reply = doRequest(body);
-        chat_base.push_back(body_reply);
-        std::cout << body_reply["role"] << ": " << body_reply["content"] << '\n';
+        std::string answer = brain.ask(request);
+        std::cout << "assistant" << ": " << answer << '\n';
         std::cout << "user: ";
     }
     return 0;
