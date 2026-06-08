@@ -21,7 +21,7 @@ class OllamaBrain : public IBrain {
         std::vector<nlohmann::json> base;
         nlohmann::json json_config;
         void uploadConfig() {
-            std::ifstream in("config.json");
+            std::ifstream in(CONFIG_PATH);
             if (!in.is_open()) {
                 std::cerr << "Unable to open config file\n";
                 return;
