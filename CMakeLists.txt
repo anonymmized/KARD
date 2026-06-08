@@ -10,8 +10,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(cpr REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-add_executable(kard brain/basic_chat.cpp)
-
+add_executable(kard brain/OllamaBrain.cpp core/kardcore.cpp brain/IInput.cpp brain/IOutput.cpp)
+target_include_directories(kard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(kard PRIVATE CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/config.json")
 
 target_link_libraries(kard PRIVATE cpr::cpr nlohmann_json::nlohmann_json)
