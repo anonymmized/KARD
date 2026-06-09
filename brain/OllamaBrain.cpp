@@ -5,6 +5,9 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
+#include <atomic>
+#include <thread>
+#include <chrono>
 
 void OllamaBrain::uploadConfig() {
     std::ifstream in(CONFIG_PATH);
