@@ -28,6 +28,7 @@ nlohmann::json OllamaBrain::getBody(const std::string& request) {
 
 std::string OllamaBrain::ask(const std::string& request) {
     base.push_back({{"role","user"},{"content",request}});
+
     nlohmann::json body = getBody(request);
 
     cpr::Response resp = cpr::Post(
@@ -38,6 +39,9 @@ std::string OllamaBrain::ask(const std::string& request) {
 
     if (resp.status_code != 200) return "It seems an error)\n";
     auto reply = nlohmann::json::parse(resp.text);
-    base.push_back({{"role",reply["messages"]["role"]},{"content",reply["messages"]["content"]}});
+    base.push_back({{"role",reply["message"]["role"]},{"content",reply["message"]["content"]}});
+    while (base.size() > 20) base.erase(base.begin());
     return reply["message"]["content"].get<std::string>();
 }
+
+
