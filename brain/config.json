@@ -7,5 +7,13 @@
     "top_p":0.9,
     "num_predict":120
   },
-  "stream":false
+  "stream":false,
+  "tools": [{
+    "type":"function",
+    "function": {
+      "name":"get_cpu",
+      "description":"Current cpu user in percents. Call it when user aks's for a server's/processor's state",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  }]
 }
