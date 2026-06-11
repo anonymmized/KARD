@@ -47,11 +47,15 @@ std::string OllamaBrain::ask(const std::string& request) {
         auto reply = nlohmann::json::parse(resp.text);
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) return reply["message"]["content"].get<std::string>();
-        std::string tool_name = reply["message"]["tool_calls"][0]["function"]["name"];
-        if (tool_name == "get_cpu") {
-            base.push_back({{"role","tool"},{"content", std::to_string(getCpuUsage())}});
-        } else {
-            base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
+        for (const auto& call : reply["message"]["tool_calls"]) {
+            std::string tool_name = call["function"]["name"];
+            if (tool_name == "get_cpu") {
+                base.push_back({{"role","tool"},{"content", std::to_string(getCpuUsage())}});
+            } else if (tool_name == "get_ram") {
+                base.push_back({{"role","tool"},{"content", std::to_string(getRamUsage())}});
+            } else {
+                base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
+            }
         }
         while (base.size() > 20) base.erase(base.begin());
         str_reply = reply["message"]["content"].get<std::string>();

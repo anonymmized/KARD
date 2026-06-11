@@ -10,6 +10,7 @@
 #include <mach/mach.h>
 #include <sys/sysctl.h>
 #else
+#include <unordered_map>
 #include <fstream>
 #include <sstream>
 #endif
@@ -26,6 +27,31 @@ bool readCpuTimes(CpuTimes &t) {
     return true;
 
 }
+bool readRamParts(RamParts& parts) {
+    mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+    vm_statistics64_data_t vmstat;
+    if (host_statistics64(mach_host_self(), HOST_VM_INFO64, reinterpret_cast<host_info_t>(&vmstat), &count) != KERN_SUCCESS) return false;
+
+    int64_t page_size;
+    host_page_size(mach_host_self(), reinterpret_cast<vm_size_t*>(&page_size));
+
+    uint64_t free_memory = (uint64_t)vmstat.free_count * page_size;
+    uint64_t inactive_memory = (uint64_t)vmstat.inactive_count * page_size;
+    uint64_t speculative = (uint64_t)vmstat.speculative_count * page_size;
+    uint64_t available = free_memory + inactive_memory + speculative;
+
+    uint64_t total_memory = 0;
+    size_t len = sizeof(total_memory);
+    if (sysctlbyname("hw.memsize", &total_memory, &len, NULL, 0) != 0) return false;
+
+    uint64_t used = total_memory - available;
+    double used_percent = (double)used * 100.0 / (double)total_memory;
+    parts.total_memory = total_memory;
+    parts.available = available;
+    parts.used = used;
+    parts.used_percent = used_percent;
+    return true;
+}
 #else
 bool readCpuTimes(CpuTimes &t) {
     std::ifstream fl("/proc/stat");
@@ -36,6 +62,37 @@ bool readCpuTimes(CpuTimes &t) {
     std::string cpuLabel;
     ss >> cpuLabel;
     ss >> t.user >> t.nice >> t.system >> t.idle >> t.iowait >> t.irq >> t.softirq >> t.steal;
+    return true;
+}
+bool readRamParts(RamParts& parts) {
+    std::ifstream fl("/proc/meminfo");
+    if (!fl.is_open()) return false;
+
+    std::unordered_map<std::string, long long> m;
+    std::string key;
+    long long value;
+    std::string unit;
+    while (fl >> key >> value >> unit) {
+        if (!key.empty() && key.back()==':') key.pop_back();
+        m[key] = value;
+    }
+
+    uint64_t total_kb = m["MemTotal"];
+    uint64_t available_kb = 0;
+    if (m.count("MemAvailable")) available_kb = m["MemAvailable"];
+    else available_kb = m["MemFree"] + m["Buffers"] + m["Cached"];
+
+    uint64_t used_kb = (total_kb > available_kb) ? (total_kb - available_kb) : 0;
+
+    const uint64_t KB_TO_BYTES = 1024ULL;
+    uint64_t total = total_kb * KB_TO_BYTES;
+    uint64_t available = available_kb * KB_TO_BYTES;
+    uint64_t used = used_kb * KB_TO_BYTES;
+    double used_percent_tms = (total == 0) ? 0.0 : (double)used * 100.0 / (double)total;
+    parts.total_memory = total;
+    parts.available = available;
+    parts.used = used;
+    parts.used_percent = used_percent_tms;
     return true;
 }
 #endif
@@ -74,4 +131,10 @@ double getCpuUsage(int delay_ms) {
     prev = curr;
 
     return usage;
+}
+
+double getRamUsage() {
+    RamParts parts;
+    if (!readRamParts(parts)) return -1.0;
+    return parts.used_percent;
 }
