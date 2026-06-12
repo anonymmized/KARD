@@ -6,10 +6,13 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <stdexcept>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #else
 #include <unordered_map>
 #include <fstream>
@@ -53,6 +56,20 @@ bool readRamParts(RamParts& parts) {
     parts.used_percent = used_percent;
     return true;
 }
+std::string getUptime() {
+    struct timeval boottime;
+    size_t sz = sizeof(boottime);
+    int mib[2] = {CTL_KERN, KERN_BOOTTIME};
+    if (sysctl(mib, 2, &boottime, &sz, nullptr, 0) != 0) return "There is an error in getting the correct time\n";
+    time_t boot_sec = boottime.tv_sec;
+    time_t now = time(nullptr);
+    if (now == (time_t)-1) return "Can't get a current time\n";
+    double time_in_sec = difftime(now, boot_sec);
+    double days = (int)time_in_sec / 86400;
+    double hours = (int)time_in_sec % 86400 / 3600;
+    double minutes = (int)time_in_sec % 86400 % 3600 / 60;
+    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
+}
 #else
 bool readCpuTimes(CpuTimes &t) {
     std::ifstream fl("/proc/stat");
@@ -95,6 +112,16 @@ bool readRamParts(RamParts& parts) {
     parts.used = used;
     parts.used_percent = used_percent_tms;
     return true;
+}
+std::string getUptime() {
+    std::ifstream fl("/proc/uptime");
+    if (!fl.is_open()) return "Failed to open /proc/uptime\n";
+    double time_in_sec;
+    fl >> time_in_sec;
+    double days = time_in_sec / 86400.0;
+    double hours = time_in_sec % 86400.0 / 3600.0;
+    double minutes = time_in_sec % 86400.0 % 3600.0 / 60.0;
+    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
 }
 #endif
 

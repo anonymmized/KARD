@@ -29,5 +29,12 @@
       "description":"Current used and total disk space on device in gigabytes. Call it when user ask's for a server's disk space status",
       "parameters":{"type":"object","properties":{},"required":[]}
     }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_uptime",
+      "description":"The uptime in days:hours:minutes format. Call it when user ask's for server's uptime.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
   }]
 }

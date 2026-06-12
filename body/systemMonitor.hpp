@@ -18,3 +18,4 @@ double getCpuUsage(int delay_ms = 200);
 bool readRamParts(RamParts& parts);
 double getRamUsage();
 std::string getDiskSpace();
+std::string getUptime();
