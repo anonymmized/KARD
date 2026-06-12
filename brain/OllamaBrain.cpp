@@ -62,6 +62,7 @@ std::string OllamaBrain::ask(const std::string& request) {
             }
         }
         while (base.size() > 20) base.erase(base.begin());
+        while (!base.empty() && base.front()["role"] != "user") base.erase(base.begin());
         str_reply = reply["message"]["content"].get<std::string>();
         i--;
     }
