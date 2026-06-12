@@ -13,7 +13,9 @@ void KardCore::run() {
     while (true) {
         std::string req = input.read();
         if (req == "/exit") return;
+        output.startThinking();
         std::string ans = brain.ask(req);
+        output.stopThinking();
         output.show(ans);
     }
 }

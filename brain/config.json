@@ -7,5 +7,27 @@
     "top_p":0.9,
     "num_predict":120
   },
-  "stream":false
+  "stream":false,
+  "tools": [{
+    "type":"function",
+    "function": {
+      "name":"get_cpu",
+      "description":"Current cpu user in percents. Call it when user aks's for a server's/processor's state",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_ram",
+      "description":"Current used ram in percents. Call it when user aks's for a server's/processor's or ram state",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_disk",
+      "description":"Current used and total disk space on device in gigabytes. Call it when user ask's for a server's disk space status",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  }]
 }
