@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 struct CpuTimes {
     unsigned long long user = 0, nice = 0, system = 0, idle = 0, iowait = 0, irq = 0, softirq = 0, steal = 0;
@@ -16,3 +17,4 @@ double computeUsage(const CpuTimes& prev, const CpuTimes& curr);
 double getCpuUsage(int delay_ms = 200);
 bool readRamParts(RamParts& parts);
 double getRamUsage();
+std::string getDiskSpace();

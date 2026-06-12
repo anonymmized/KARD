@@ -22,5 +22,12 @@
       "description":"Current used ram in percents. Call it when user aks's for a server's/processor's or ram state",
       "parameters":{"type":"object","properties":{},"required":[]}
     }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_disk",
+      "description":"Current used and total disk space on device in gigabytes. Call it when user ask's for a server's disk space status",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
   }]
 }

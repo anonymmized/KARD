@@ -53,6 +53,8 @@ std::string OllamaBrain::ask(const std::string& request) {
                 base.push_back({{"role","tool"},{"content", std::to_string(getCpuUsage())}});
             } else if (tool_name == "get_ram") {
                 base.push_back({{"role","tool"},{"content", std::to_string(getRamUsage())}});
+            } else if (tool_name == "get_disk") {
+                base.push_back({{"role","tool"},{"content", getDiskSpace()}});
             } else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
             }

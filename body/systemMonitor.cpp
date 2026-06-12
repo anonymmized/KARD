@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -137,4 +138,16 @@ double getRamUsage() {
     RamParts parts;
     if (!readRamParts(parts)) return -1.0;
     return parts.used_percent;
+}
+
+std::string getDiskSpace() {
+    auto info = std::filesystem::space("/");
+    using ull = unsigned long long;
+    ull total = info.capacity;
+    ull free = info.available;
+    ull used = total - free;
+    ull factor = 1024ULL*1024ULL*1024ULL;
+    ull total_gib = total / factor;
+    ull used_gib = used / factor;
+    return std::to_string(used_gib) + "/" + std::to_string(total_gib);
 }
