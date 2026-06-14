@@ -178,3 +178,11 @@ std::string getDiskSpace() {
     ull used_gib = used / factor;
     return std::to_string(used_gib) + "/" + std::to_string(total_gib);
 }
+
+std::string getAll() {
+    double cpu = getCpuUsage();
+    double ram = getRamUsage();
+    std::string disk = getDiskSpace();
+    std::string uptime = getUptime();
+    return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
+}

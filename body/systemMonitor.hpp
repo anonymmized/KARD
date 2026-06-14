@@ -19,3 +19,4 @@ bool readRamParts(RamParts& parts);
 double getRamUsage();
 std::string getDiskSpace();
 std::string getUptime();
+std::string getAll();

@@ -57,6 +57,8 @@ std::string OllamaBrain::ask(const std::string& request) {
                 base.push_back({{"role","tool"},{"content", getDiskSpace()}});
             } else if (tool_name == "get_uptime") {
                 base.push_back({{"role","tool"},{"content", getUptime()}});
+            } else if (tool_name == "get_all") {
+                base.push_back({{"role","tool"},{"content", getAll()}});
             } else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
             }
