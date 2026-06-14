@@ -6,8 +6,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
-#include <atomic>
-#include <thread>
 #include <chrono>
 
 void OllamaBrain::uploadConfig() {
@@ -18,6 +16,18 @@ void OllamaBrain::uploadConfig() {
     }
     in >> json_config;
     in.close();
+}
+
+int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
+    auto now = std::chrono::system_clock::now();
+    std::ofstream fl("model_sys_log.jsonl", std::ios::app);
+    if (!fl.is_open()) {
+        std::cerr << "unable to open log file\n";
+        return 1;
+    }
+    nlohmann::json rec = {{"ts", std::chrono::system_clock::to_time_t(now)}, {"tool", tool}, {"value", value}};
+    fl << rec.dump() << '\n';
+    return 0;
 }
 
 nlohmann::json OllamaBrain::getBody(const std::string& request) {
@@ -50,15 +60,25 @@ std::string OllamaBrain::ask(const std::string& request) {
         for (const auto& call : reply["message"]["tool_calls"]) {
             std::string tool_name = call["function"]["name"];
             if (tool_name == "get_cpu") {
-                base.push_back({{"role","tool"},{"content", std::to_string(getCpuUsage())}});
+                std::string v = std::to_string(getCpuUsage());
+                sendToLog("get_cpu", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_ram") {
-                base.push_back({{"role","tool"},{"content", std::to_string(getRamUsage())}});
+                std::string v = std::to_string(getRamUsage());
+                sendToLog("get_ram", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_disk") {
-                base.push_back({{"role","tool"},{"content", getDiskSpace()}});
+                std::string v = getDiskSpace();
+                sendToLog("get_disk", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_uptime") {
-                base.push_back({{"role","tool"},{"content", getUptime()}});
+                std::string v = getUptime();
+                sendToLog("get_uptime", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_all") {
-                base.push_back({{"role","tool"},{"content", getAll()}});
+                std::string v = getAll();
+                sendToLog("get_all", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
             }
