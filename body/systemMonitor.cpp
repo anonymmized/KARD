@@ -7,6 +7,7 @@
 #include <iostream>
 #include <filesystem>
 #include <stdexcept>
+#include <nlohmann/json.hpp>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -185,4 +186,32 @@ std::string getAll() {
     std::string disk = getDiskSpace();
     std::string uptime = getUptime();
     return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
+}
+
+std::string summarizeHealth(const std::string& need_tool, const int hours) {
+    std::ifstream fl("../brain/model_sys_log.jsonl");
+    if (!fl.is_open()) {
+        return "unable to open log file for reading\n";
+    }
+    std::string line;
+    auto now = std::chrono::system_clock::now();
+    auto now_ts = std::chrono::system_clock::to_time_t(now);
+    std::unordered_map<std::string, std::vector<std::pair<long, double>>> series;
+    while (std::getline(fl, line)) {
+        if (line.empty()) continue;
+        auto j = nlohmann::json::parse(line, nullptr, false);
+        if (j.is_discarded()) continue;
+
+        long ts = j["ts"].get<long>();
+        if (now_ts - ts > hours * 3600) continue;
+        static const std::set<std::string> numeric = {"get_cpu", "get_ram"};
+        std::string tool = j["tool"].get<std::string>();
+        if (!numeric.count(tool)) continue;
+        try {
+            series[tool].push_back({ts, std::stod(j["value"].get<std::string>())});
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+
 }
