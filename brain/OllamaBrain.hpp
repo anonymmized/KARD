@@ -15,6 +15,8 @@ class OllamaBrain : public IBrain {
         nlohmann::json json_config;
         void uploadConfig();
         nlohmann::json getBody(const std::string& request);
+        int sendToLog(const std::string& tool, const std::string& value);
+        int parsePeriod(const std::string& p);
     public:
         OllamaBrain(std::vector<nlohmann::json> _base) : base(_base) {}
         std::string ask(const std::string& request);

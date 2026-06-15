@@ -6,8 +6,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
-#include <atomic>
-#include <thread>
 #include <chrono>
 
 void OllamaBrain::uploadConfig() {
@@ -18,6 +16,26 @@ void OllamaBrain::uploadConfig() {
     }
     in >> json_config;
     in.close();
+}
+
+int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
+    auto now = std::chrono::system_clock::now();
+    std::ofstream fl(LOG_PATH, std::ios::app);
+    if (!fl.is_open()) {
+        std::cerr << "unable to open log file\n";
+        return 1;
+    }
+    nlohmann::json rec = {{"ts", std::chrono::system_clock::to_time_t(now)}, {"tool", tool}, {"value", value}};
+    fl << rec.dump() << '\n';
+    return 0;
+}
+
+int OllamaBrain::parsePeriod(const std::string& p) {
+    if (p.empty()) return 1;
+    int num = std::stoi(p);
+    char unit = p.back();
+    if (unit == 'd') return num * 24;
+    return num;
 }
 
 nlohmann::json OllamaBrain::getBody(const std::string& request) {
@@ -50,16 +68,40 @@ std::string OllamaBrain::ask(const std::string& request) {
         for (const auto& call : reply["message"]["tool_calls"]) {
             std::string tool_name = call["function"]["name"];
             if (tool_name == "get_cpu") {
-                base.push_back({{"role","tool"},{"content", std::to_string(getCpuUsage())}});
+                std::string v = std::to_string(getCpuUsage());
+                sendToLog("get_cpu", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_ram") {
-                base.push_back({{"role","tool"},{"content", std::to_string(getRamUsage())}});
+                std::string v = std::to_string(getRamUsage());
+                sendToLog("get_ram", v);
+                base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_disk") {
-                base.push_back({{"role","tool"},{"content", getDiskSpace()}});
-            } else {
+                std::string v = getDiskSpace();
+                sendToLog("get_disk", v);
+                base.push_back({{"role","tool"},{"content", v}});
+            } else if (tool_name == "get_uptime") {
+                std::string v = getUptime();
+                sendToLog("get_uptime", v);
+                base.push_back({{"role","tool"},{"content", v}});
+            } else if (tool_name == "get_all") {
+                std::string v = getAll();
+                sendToLog("get_all", v);
+                base.push_back({{"role","tool"},{"content", v}});
+            } else if (tool_name == "summarize_health") {
+                auto args = call["function"]["arguments"];
+                if (args.is_string()) args = nlohmann::json::parse(args.get<std::string>());
+
+                std::string period = args.value("period", "1h");
+                int hours = parsePeriod(period);
+                std::string v = summarizeHealth(hours);
+                base.push_back({{"role","tool"},{"content",v}});
+            }
+            else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
             }
         }
         while (base.size() > 20) base.erase(base.begin());
+        while (!base.empty() && base.front()["role"] != "user") base.erase(base.begin());
         str_reply = reply["message"]["content"].get<std::string>();
         i--;
     }

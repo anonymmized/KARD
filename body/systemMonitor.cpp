@@ -6,13 +6,20 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <stdexcept>
+#include <algorithm>
+#include <numeric>
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <set>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #else
 #include <unordered_map>
-#include <fstream>
 #include <sstream>
 #endif
 
@@ -52,6 +59,20 @@ bool readRamParts(RamParts& parts) {
     parts.used = used;
     parts.used_percent = used_percent;
     return true;
+}
+std::string getUptime() {
+    struct timeval boottime;
+    size_t sz = sizeof(boottime);
+    int mib[2] = {CTL_KERN, KERN_BOOTTIME};
+    if (sysctl(mib, 2, &boottime, &sz, nullptr, 0) != 0) return "There is an error in getting the correct time\n";
+    time_t boot_sec = boottime.tv_sec;
+    time_t now = time(nullptr);
+    if (now == (time_t)-1) return "Can't get a current time\n";
+    double time_in_sec = difftime(now, boot_sec);
+    double days = (int)time_in_sec / 86400;
+    double hours = (int)time_in_sec % 86400 / 3600;
+    double minutes = (int)time_in_sec % 86400 % 3600 / 60;
+    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
 }
 #else
 bool readCpuTimes(CpuTimes &t) {
@@ -95,6 +116,16 @@ bool readRamParts(RamParts& parts) {
     parts.used = used;
     parts.used_percent = used_percent_tms;
     return true;
+}
+std::string getUptime() {
+    std::ifstream fl("/proc/uptime");
+    if (!fl.is_open()) return "Failed to open /proc/uptime\n";
+    double time_in_sec;
+    fl >> time_in_sec;
+    double days = time_in_sec / 86400.0;
+    double hours = time_in_sec % 86400.0 / 3600.0;
+    double minutes = time_in_sec % 86400.0 % 3600.0 / 60.0;
+    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
 }
 #endif
 
@@ -150,4 +181,57 @@ std::string getDiskSpace() {
     ull total_gib = total / factor;
     ull used_gib = used / factor;
     return std::to_string(used_gib) + "/" + std::to_string(total_gib);
+}
+
+std::string getAll() {
+    double cpu = getCpuUsage();
+    double ram = getRamUsage();
+    std::string disk = getDiskSpace();
+    std::string uptime = getUptime();
+    return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
+}
+
+std::string summarizeHealth(const int hours) {
+    std::ifstream fl(LOG_PATH);
+    if (!fl.is_open()) {
+        return "unable to open log file for reading\n";
+    }
+    std::string line;
+    auto now = std::chrono::system_clock::now();
+    auto now_ts = std::chrono::system_clock::to_time_t(now);
+    std::unordered_map<std::string, std::vector<std::pair<long, double>>> series;
+    while (std::getline(fl, line)) {
+        if (line.empty()) continue;
+        auto j = nlohmann::json::parse(line, nullptr, false);
+        if (j.is_discarded()) continue;
+
+        long ts = j["ts"].get<long>();
+        if (now_ts - ts > hours * 3600) continue;
+        static const std::set<std::string> numeric = {"get_cpu", "get_ram"};
+        std::string tool = j["tool"].get<std::string>();
+        if (!numeric.count(tool)) continue;
+        try {
+            series[tool].push_back({ts, std::stod(j["value"].get<std::string>())});
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+    std::string summary;
+    for (auto& [key, value] : series) {
+
+        if (value.empty()) return "no data for the last " + std::to_string(hours) + "h.";
+        std::sort(value.begin(), value.end(), [](const auto& a, const auto& b){ return a.first < b.first; });
+        double sum = 0.0, peak = value.front().second;
+        for (const auto& [ts, val] : value) {
+            sum += val;
+            peak = std::max(peak, val);
+        }
+
+        double avg = sum / value.size();
+        double growth = value.back().second - value.front().second;
+
+        summary += key + ": avg " + std::to_string(avg) + ", peak " + std::to_string(peak) + ", change " + std::to_string(growth) + " (" + std::to_string(value.size()) + " samples)\n";
+    }
+    return summary.empty() ? "no data for the last " + std::to_string(hours) + "h." : summary;
+
 }
