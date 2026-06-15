@@ -7,7 +7,11 @@
 #include <iostream>
 #include <filesystem>
 #include <stdexcept>
+#include <algorithm>
+#include <numeric>
 #include <nlohmann/json.hpp>
+#include <fstream>
+#include <set>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -16,7 +20,6 @@
 #include <sys/time.h>
 #else
 #include <unordered_map>
-#include <fstream>
 #include <sstream>
 #endif
 
@@ -188,8 +191,8 @@ std::string getAll() {
     return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
 }
 
-std::string summarizeHealth(const std::string& need_tool, const int hours) {
-    std::ifstream fl("../brain/model_sys_log.jsonl");
+std::string summarizeHealth(const int hours) {
+    std::ifstream fl(LOG_PATH);
     if (!fl.is_open()) {
         return "unable to open log file for reading\n";
     }
@@ -213,5 +216,22 @@ std::string summarizeHealth(const std::string& need_tool, const int hours) {
             continue;
         }
     }
+    std::string summary;
+    for (auto& [key, value] : series) {
+
+        if (value.empty()) return "no data for the last " + std::to_string(hours) + "h.";
+        std::sort(value.begin(), value.end(), [](const auto& a, const auto& b){ return a.first < b.first; });
+        double sum = 0.0, peak = value.front().second;
+        for (const auto& [ts, val] : value) {
+            sum += val;
+            peak = std::max(peak, val);
+        }
+
+        double avg = sum / value.size();
+        double growth = value.back().second - value.front().second;
+
+        summary += key + ": avg " + std::to_string(avg) + ", peak " + std::to_string(peak) + ", change " + std::to_string(growth) + " (" + std::to_string(value.size()) + " samples)\n";
+    }
+    return summary.empty() ? "no data for the last " + std::to_string(hours) + "h." : summary;
 
 }

@@ -20,7 +20,7 @@ void OllamaBrain::uploadConfig() {
 
 int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
     auto now = std::chrono::system_clock::now();
-    std::ofstream fl("model_sys_log.jsonl", std::ios::app);
+    std::ofstream fl(LOG_PATH, std::ios::app);
     if (!fl.is_open()) {
         std::cerr << "unable to open log file\n";
         return 1;
@@ -28,6 +28,14 @@ int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
     nlohmann::json rec = {{"ts", std::chrono::system_clock::to_time_t(now)}, {"tool", tool}, {"value", value}};
     fl << rec.dump() << '\n';
     return 0;
+}
+
+int OllamaBrain::parsePeriod(const std::string& p) {
+    if (p.empty()) return 1;
+    int num = std::stoi(p);
+    char unit = p.back();
+    if (unit == 'd') return num * 24;
+    return num;
 }
 
 nlohmann::json OllamaBrain::getBody(const std::string& request) {
@@ -79,7 +87,16 @@ std::string OllamaBrain::ask(const std::string& request) {
                 std::string v = getAll();
                 sendToLog("get_all", v);
                 base.push_back({{"role","tool"},{"content", v}});
-            } else {
+            } else if (tool_name == "summarize_health") {
+                auto args = call["function"]["arguments"];
+                if (args.is_string()) args = nlohmann::json::parse(args.get<std::string>());
+
+                std::string period = args.value("period", "1h");
+                int hours = parsePeriod(period);
+                std::string v = summarizeHealth(hours);
+                base.push_back({{"role","tool"},{"content",v}});
+            }
+            else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
             }
         }
