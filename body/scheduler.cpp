@@ -3,6 +3,9 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <cstdlib>
+#include <iostream>
+#include <unistd.h>
 
 #ifndef SNAPSHOT_BIN
 #define SNAPSHOT_BIN "kard-snapshot"
@@ -75,7 +78,7 @@ bool installSnapshotJob() {
     return run("launchctl bootstrap " + userDomain() + " " + plistPath(home));
 }
 
-boot uninstallSnapshotJob() {
+bool uninstallSnapshotJob() {
     const char* home = homeDir();
     if (!home) { std::cerr << "scheduler: $HOME is not set\n"; return false; }
 
@@ -88,3 +91,67 @@ boot uninstallSnapshotJob() {
 bool isSnapshotJobInstalled() {
     return run("launchctl print " + userDomain() + "/" + LABEL + " >/dev/null 2>&1");
 }
+
+#else
+
+namespace {
+const std::string TIMER = "kard-snapshot.timer";
+
+std::string unitDir(const char* home) { return std::string(home) + "/.config/systemd/user"; }
+
+std::string svcPath(const char* home) { return unitDir(home) + "/kard-snapshot.service"; }
+
+std::string timerPath(const char* home) { return unitDir(home) + "/" + TIMER; }
+
+std::string serviceBody() {
+    return
+        "[Unit]\n"
+        "Description=KARD snapshot collector\n"
+        "[Service]\n"
+        "Type=oneshot\n"
+        "ExecStart=" SNAPSHOT_BIN "\n";
+}
+
+std::string timerBody() {
+    return
+        "[Unit]\n"
+        "Description=KARD snapshot every 10 min\n"
+        "[Timer]\n"
+        "OnBootSec=1min\n"
+        "OnUnitActiveSec=600\n"
+        "[Install]\n"
+        "WantedBy=timers.target\n";
+}
+}
+
+bool installSnapshotJob() {
+    const char* home = homeDir();
+    if (!home) { std::cerr << "scheduler: $HOME is not set\n"; return false; }
+
+    std::error_code ec;
+    std::filesystem::create_directories(unitDir(home), ec);
+
+    if (!writeFile(svcPath(home), serviceBody()) || !writeFile(timerPath(home), timerBody())) {
+        std::cerr << "scheduler: failed to write systemd units\n";
+        return false;
+    }
+
+    run("systemctl --user daemon-reload");
+    return run("systemctl --user enable --now " + TIMER);
+}
+
+bool uninstallSnapshotJob() {
+    const char* home = homeDir();
+    if (!home) { std::cerr << "scheduler: $HOME is not set\n"; return false; }
+
+    run("systemctl --user disable --now " + TIMER + " 2>/dev/null");
+    std::error_code ec;
+    std::filesystem::remove(svcPath(home), ec);
+    std::filesystem::remove(timerPath(home), ec);
+    run("systemctl --user daemon-reload");
+    return true;
+}
+
+bool isSnapshotJobInstalled() { return run("systemctl --user is-active --quiet " + TIMER); }
+
+#endif
