@@ -11,9 +11,9 @@ find_package(cpr REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Threads REQUIRED)
 
-add_executable(kard brain/OllamaBrain.cpp core/kardcore.cpp brain/IInput.cpp brain/IOutput.cpp body/systemMonitor.cpp)
+add_executable(kard brain/OllamaBrain.cpp core/kardcore.cpp brain/IInput.cpp brain/IOutput.cpp body/systemMonitor.cpp body/scheduler.cpp)
 target_include_directories(kard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(kard PRIVATE CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/config.json" LOG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/model_sys_log.jsonl")
+target_compile_definitions(kard PRIVATE SNAPSHOT_BIN="$<TARGET_FILE:kard-snapshot>" CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/config.json" LOG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/model_sys_log.jsonl")
 
 target_link_libraries(kard PRIVATE cpr::cpr nlohmann_json::nlohmann_json)
 
