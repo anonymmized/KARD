@@ -191,7 +191,7 @@ std::string getAll() {
     return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
 }
 
-std::string summarizeHealth(const int hours) {
+std::string summarizeHealth(const int seconds) {
     std::ifstream fl(LOG_PATH);
     if (!fl.is_open()) {
         return "unable to open log file for reading\n";
@@ -206,7 +206,7 @@ std::string summarizeHealth(const int hours) {
         if (j.is_discarded()) continue;
 
         long ts = j["ts"].get<long>();
-        if (now_ts - ts > hours * 3600) continue;
+        if (now_ts - ts > seconds) continue;
         static const std::set<std::string> numeric = {"get_cpu", "get_ram"};
         std::string tool = j["tool"].get<std::string>();
         if (!numeric.count(tool)) continue;
@@ -218,8 +218,6 @@ std::string summarizeHealth(const int hours) {
     }
     std::string summary;
     for (auto& [key, value] : series) {
-
-        if (value.empty()) return "no data for the last " + std::to_string(hours) + "h.";
         std::sort(value.begin(), value.end(), [](const auto& a, const auto& b){ return a.first < b.first; });
         double sum = 0.0, peak = value.front().second;
         for (const auto& [ts, val] : value) {
@@ -232,6 +230,6 @@ std::string summarizeHealth(const int hours) {
 
         summary += key + ": avg " + std::to_string(avg) + ", peak " + std::to_string(peak) + ", change " + std::to_string(growth) + " (" + std::to_string(value.size()) + " samples)\n";
     }
-    return summary.empty() ? "no data for the last " + std::to_string(hours) + "h." : summary;
+    return summary.empty() ? "no data for the last " + std::to_string(seconds / 3600) + "h." : summary;
 
 }

@@ -31,10 +31,18 @@ int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
 }
 
 int OllamaBrain::parsePeriod(const std::string& p) {
-    if (p.empty()) return 1;
-    int num = std::stoi(p);
+    if (p.empty()) return 3600;
+    int num;
+    try {
+        num = std::stoi(p);
+    } catch (const std::exception&) {
+        return 3600;
+    }
+    if (num <= 0) return 3600;
     char unit = p.back();
-    if (unit == 'd') return num * 24;
+    if (unit == 'd') return num * 24 * 3600;
+    if (unit == 'm') return num * 60;
+    if (unit == 'h') return num * 3600;
     return num;
 }
 
