@@ -4,6 +4,6 @@
 
 std::string TerminalInput::read() {
     std::string line;
-    std::getline(std::cin, line);
+    if (!std::getline(std::cin, line)) return "/exit";
     return line;
 }

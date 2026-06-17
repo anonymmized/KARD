@@ -39,6 +39,10 @@ int main(int argc, char** argv) {
             std::cout << "The daemon is running\n";
             return 0;
         }
+        else {
+            std::cout << "There is no argument like this\n";
+            return 1;
+        }
     }
     std::vector<nlohmann::json> base;
     TerminalInput t_input;
