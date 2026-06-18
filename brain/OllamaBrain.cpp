@@ -93,9 +93,14 @@ std::string OllamaBrain::ask(const std::string& request) {
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_all") {
                 std::string v = getAll();
-                sendToLog("get_all", v);
+                //sendToLog("get_all", v);
                 base.push_back({{"role","tool"},{"content", v}});
-            } else if (tool_name == "summarize_health") {
+            } else if (tool_name == "get_temp") {
+                std::string v = std::to_string(getTemp());
+                sendToLog("get_temp", v);
+                base.push_back({{"role","tool"},{"content", v}});
+            }
+            else if (tool_name == "summarize_health") {
                 auto args = call["function"]["arguments"];
                 if (args.is_string()) args = nlohmann::json::parse(args.get<std::string>());
 

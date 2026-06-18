@@ -127,6 +127,14 @@ std::string getUptime() {
     double minutes = time_in_sec % 86400.0 % 3600.0 / 60.0;
     return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
 }
+
+double getTemp() {
+    std::ifstream fl("/sys/class/thermal/thermal_zone0/temp");
+    if (!fl.is_open()) return -1.0;
+    long milli;
+    fl >> milli;
+    return milli / 1000.0;
+}
 #endif
 
 double computeUsage(const CpuTimes& prev, const CpuTimes& curr) {
