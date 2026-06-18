@@ -20,4 +20,5 @@ double getRamUsage();
 std::string getDiskSpace();
 std::string getUptime();
 std::string getAll();
+double getTemp();
 std::string summarizeHealth(const int hours);

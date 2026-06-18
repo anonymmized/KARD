@@ -33,8 +33,10 @@ bool readCpuTimes(CpuTimes &t) {
     t.system = cpuinfo.cpu_ticks[CPU_STATE_SYSTEM];
     t.idle = cpuinfo.cpu_ticks[CPU_STATE_IDLE];
     return true;
-
 }
+
+double getTemp() { return -1.0; }
+
 bool readRamParts(RamParts& parts) {
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
     vm_statistics64_data_t vmstat;
@@ -132,7 +134,7 @@ double getTemp() {
     std::ifstream fl("/sys/class/thermal/thermal_zone0/temp");
     if (!fl.is_open()) return -1.0;
     long milli;
-    fl >> milli;
+    if (!(fl >> milli)) return -1.0;
     return milli / 1000.0;
 }
 #endif
@@ -215,7 +217,7 @@ std::string summarizeHealth(const int seconds) {
 
         long ts = j["ts"].get<long>();
         if (now_ts - ts > seconds) continue;
-        static const std::set<std::string> numeric = {"get_cpu", "get_ram"};
+        static const std::set<std::string> numeric = {"get_cpu", "get_ram", "get_temp"};
         std::string tool = j["tool"].get<std::string>();
         if (!numeric.count(tool)) continue;
         try {
