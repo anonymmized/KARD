@@ -192,7 +192,7 @@ std::string getDiskSpace() {
     ull totalSpaceGb = totalSpace / factor;
     ull usedSpaceGb = usedSpace / factor;
     double spaceInPercent = (totalSpace == 0) ? 0.0 : (double)usedSpace * 100.0 / (double)totalSpace;
-    return "used " + std::to_string(usedSpaceGb) + " Gb / total " + std::to_string(totalSpaceGb) + " Gb (" + std::to_string((int)(spaceInPercent + 0.5)) + "%";
+    return "used " + std::to_string(usedSpaceGb) + " Gb / total " + std::to_string(totalSpaceGb) + " Gb (" + std::to_string((int)(spaceInPercent + 0.5)) + "%)";
 }
 
 std::string getAll() {
