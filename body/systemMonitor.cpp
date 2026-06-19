@@ -33,8 +33,10 @@ bool readCpuTimes(CpuTimes &t) {
     t.system = cpuinfo.cpu_ticks[CPU_STATE_SYSTEM];
     t.idle = cpuinfo.cpu_ticks[CPU_STATE_IDLE];
     return true;
-
 }
+
+double getTemp() { return -1.0; }
+
 bool readRamParts(RamParts& parts) {
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
     vm_statistics64_data_t vmstat;
@@ -61,18 +63,18 @@ bool readRamParts(RamParts& parts) {
     return true;
 }
 std::string getUptime() {
-    struct timeval boottime;
-    size_t sz = sizeof(boottime);
+    struct timeval bootTime;
+    size_t bootTimeSize = sizeof(bootTime);
     int mib[2] = {CTL_KERN, KERN_BOOTTIME};
-    if (sysctl(mib, 2, &boottime, &sz, nullptr, 0) != 0) return "There is an error in getting the correct time\n";
-    time_t boot_sec = boottime.tv_sec;
-    time_t now = time(nullptr);
-    if (now == (time_t)-1) return "Can't get a current time\n";
-    double time_in_sec = difftime(now, boot_sec);
-    double days = (int)time_in_sec / 86400;
-    double hours = (int)time_in_sec % 86400 / 3600;
-    double minutes = (int)time_in_sec % 86400 % 3600 / 60;
-    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
+    if (sysctl(mib, 2, &bootTime, &bootTimeSize, nullptr, 0) != 0) return "There is an error in getting the correct time\n";
+    time_t bootSec = bootTime.tv_sec;
+    time_t currentTime = time(nullptr);
+    if (currentTime == (time_t)-1) return "Can't get a current time\n";
+    long timeInSec = (long)difftime(currentTime, bootSec);
+    long days = timeInSec / SEC_IN_DAY;
+    long hours = (timeInSec % SEC_IN_DAY) / SEC_IN_HOUR;
+    long minutes = (timeInSec % SEC_IN_HOUR) / SEC_IN_MINUTE;
+    return std::to_string(days) + "d " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
 }
 #else
 bool readCpuTimes(CpuTimes &t) {
@@ -118,14 +120,23 @@ bool readRamParts(RamParts& parts) {
     return true;
 }
 std::string getUptime() {
-    std::ifstream fl("/proc/uptime");
-    if (!fl.is_open()) return "Failed to open /proc/uptime\n";
-    double time_in_sec;
-    fl >> time_in_sec;
-    double days = time_in_sec / 86400.0;
-    double hours = time_in_sec % 86400.0 / 3600.0;
-    double minutes = time_in_sec % 86400.0 % 3600.0 / 60.0;
-    return std::to_string(days) + "d. " + std::to_string(hours) + "h. " + std::to_string(minutes) + "m.";
+    std::ifstream fileToRead("/proc/uptime");
+    if (!fileToRead.is_open()) return "Failed to open /proc/uptime\n";
+    double timeInSec;
+    fileToRead >> timeInSec;
+    long totalInSec = (long)timeInSec;
+    long days = totalInSec / SEC_IN_DAY;
+    long hours = (totalInSec % SEC_IN_DAY) / SEC_IN_HOUR;
+    long minutes = (totalInSec % SEC_IN_HOUR) / SEC_IN_MINUTE;
+    return std::to_string(days) + "d " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+}
+
+double getTemp() {
+    std::ifstream fl("/sys/class/thermal/thermal_zone0/temp");
+    if (!fl.is_open()) return -1.0;
+    long milli;
+    if (!(fl >> milli)) return -1.0;
+    return milli / 1000.0;
 }
 #endif
 
@@ -172,15 +183,16 @@ double getRamUsage() {
 }
 
 std::string getDiskSpace() {
-    auto info = std::filesystem::space("/");
+    auto infoAboutSystem = std::filesystem::space("/");
     using ull = unsigned long long;
-    ull total = info.capacity;
-    ull free = info.available;
-    ull used = total - free;
+    ull totalSpace = infoAboutSystem.capacity;
+    ull freeSpace = infoAboutSystem.available;
+    ull usedSpace = totalSpace - freeSpace;
     ull factor = 1024ULL*1024ULL*1024ULL;
-    ull total_gib = total / factor;
-    ull used_gib = used / factor;
-    return std::to_string(used_gib) + "/" + std::to_string(total_gib);
+    ull totalSpaceGb = totalSpace / factor;
+    ull usedSpaceGb = usedSpace / factor;
+    double spaceInPercent = (totalSpace == 0) ? 0.0 : (double)usedSpace * 100.0 / (double)totalSpace;
+    return "used " + std::to_string(usedSpaceGb) + " Gb / total " + std::to_string(totalSpaceGb) + " Gb (" + std::to_string((int)(spaceInPercent + 0.5)) + "%)";
 }
 
 std::string getAll() {
@@ -188,7 +200,10 @@ std::string getAll() {
     double ram = getRamUsage();
     std::string disk = getDiskSpace();
     std::string uptime = getUptime();
-    return std::to_string(cpu) + " : " + std::to_string(ram) + " : " + disk + " : " + uptime;
+    return "cpu_usage_percent: " + std::to_string(cpu)
+         + ", ram_used_percent: " + std::to_string(ram)
+         + ", disk: " + disk
+         + ", uptime: " + uptime;
 }
 
 std::string summarizeHealth(const int seconds) {
@@ -207,7 +222,7 @@ std::string summarizeHealth(const int seconds) {
 
         long ts = j["ts"].get<long>();
         if (now_ts - ts > seconds) continue;
-        static const std::set<std::string> numeric = {"get_cpu", "get_ram"};
+        static const std::set<std::string> numeric = {"get_cpu", "get_ram", "get_temp"};
         std::string tool = j["tool"].get<std::string>();
         if (!numeric.count(tool)) continue;
         try {

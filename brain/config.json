@@ -53,5 +53,12 @@
       },
       "required":["period"]
     }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_temp",
+      "description":"Shows current processor's temperature. Call it when user asks what temperature is now.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
   }]
 }
