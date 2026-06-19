@@ -1,5 +1,6 @@
 #include "OllamaBrain.hpp"
 #include "body/systemMonitor.hpp"
+#include "body/snapshot_log.hpp"
 
 #include <fstream>
 #include <cpr/cpr.h>
@@ -16,18 +17,6 @@ void OllamaBrain::uploadConfig() {
     }
     in >> json_config;
     in.close();
-}
-
-int OllamaBrain::sendToLog(const std::string& tool, const std::string& value) {
-    auto now = std::chrono::system_clock::now();
-    std::ofstream fl(LOG_PATH, std::ios::app);
-    if (!fl.is_open()) {
-        std::cerr << "unable to open log file\n";
-        return 1;
-    }
-    nlohmann::json rec = {{"ts", std::chrono::system_clock::to_time_t(now)}, {"tool", tool}, {"value", value}};
-    fl << rec.dump() << '\n';
-    return 0;
 }
 
 int OllamaBrain::parsePeriod(const std::string& p) {
@@ -77,19 +66,19 @@ std::string OllamaBrain::ask(const std::string& request) {
             std::string tool_name = call["function"]["name"];
             if (tool_name == "get_cpu") {
                 std::string v = std::to_string(getCpuUsage());
-                sendToLog("get_cpu", v);
+                appendSnapshot("get_cpu", v);
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_ram") {
                 std::string v = std::to_string(getRamUsage());
-                sendToLog("get_ram", v);
+                appendSnapshot("get_ram", v);
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_disk") {
                 std::string v = getDiskSpace();
-                sendToLog("get_disk", v);
+                appendSnapshot("get_disk", v);
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_uptime") {
                 std::string v = getUptime();
-                sendToLog("get_uptime", v);
+                appendSnapshot("get_uptime", v);
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_all") {
                 std::string v = getAll();
@@ -97,7 +86,7 @@ std::string OllamaBrain::ask(const std::string& request) {
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_temp") {
                 std::string v = std::to_string(getTemp());
-                sendToLog("get_temp", v);
+                appendSnapshot("get_temp", v);
                 base.push_back({{"role","tool"},{"content", v}});
             }
             else if (tool_name == "summarize_health") {
