@@ -67,11 +67,11 @@ std::string OllamaBrain::ask(const std::string& request) {
             if (tool_name == "get_cpu") {
                 std::string v = std::to_string(getCpuUsage());
                 appendSnapshot("get_cpu", v);
-                base.push_back({{"role","tool"},{"content", v}});
+                base.push_back({{"role","tool"},{"content", "cpu_usage_percent: " + v}});
             } else if (tool_name == "get_ram") {
                 std::string v = std::to_string(getRamUsage());
                 appendSnapshot("get_ram", v);
-                base.push_back({{"role","tool"},{"content", v}});
+                base.push_back({{"role","tool"},{"content", "ram_used_percent: " + v}});
             } else if (tool_name == "get_disk") {
                 std::string v = getDiskSpace();
                 appendSnapshot("get_disk", v);
@@ -79,15 +79,14 @@ std::string OllamaBrain::ask(const std::string& request) {
             } else if (tool_name == "get_uptime") {
                 std::string v = getUptime();
                 appendSnapshot("get_uptime", v);
-                base.push_back({{"role","tool"},{"content", v}});
+                base.push_back({{"role","tool"},{"content", "uptime: " + v}});
             } else if (tool_name == "get_all") {
                 std::string v = getAll();
-                //sendToLog("get_all", v);
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_temp") {
                 std::string v = std::to_string(getTemp());
                 appendSnapshot("get_temp", v);
-                base.push_back({{"role","tool"},{"content", v}});
+                base.push_back({{"role","tool"},{"content", "temperature_celsius: " + v}});
             }
             else if (tool_name == "summarize_health") {
                 auto args = call["function"]["arguments"];
