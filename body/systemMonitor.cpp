@@ -16,6 +16,8 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -275,7 +277,8 @@ double getTcpProbe(const char* destIp, uint16_t sourcePort) {
         FD_SET(fileDescriptor, &w);
         timeval timoutSides{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
 
-        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timoutSides) {
+        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timoutSides);
+        if (selectAnswer > 0) {
             int error = 0;
             socklen_t socketLength = sizeof(error);
             getsockopt(fileDescriptor, SOL_SOCKET, SO_ERROR, &error, &socketLength);
