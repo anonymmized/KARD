@@ -27,4 +27,4 @@ std::string getUptime();
 std::string getAll();
 double getTemp();
 std::string summarizeHealth(const int hours);
-double getTcpProbe(const char* destIp, uint16_t sourcePort);
+double getTcpProbe(const char* destIp, uint16_t destPort);

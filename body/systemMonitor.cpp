@@ -255,7 +255,7 @@ std::string summarizeHealth(const int seconds) {
 
 }
 
-double getTcpProbe(const char* destIp, uint16_t sourcePort) {
+double getTcpProbe(const char* destIp, uint16_t destPort) {
     int fileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (fileDescriptor < 0) {
         return -1.0;
@@ -265,19 +265,19 @@ double getTcpProbe(const char* destIp, uint16_t sourcePort) {
 
     sockaddr_in workingAddress{};
     workingAddress.sin_family = AF_INET;
-    workingAddress.sin_port = htons(sourcePort);
+    workingAddress.sin_port = htons(destPort);
     inet_pton(AF_INET, destIp, &workingAddress.sin_addr);
 
-    double roundTripTime = 0;
+    double roundTripTime = -1.0;
     auto tripStart = std::chrono::steady_clock::now();
     int connectAnswer = connect(fileDescriptor, (sockaddr*)&workingAddress, sizeof(workingAddress));
     if (connectAnswer < 0 && errno == EINPROGRESS) {
         fd_set w;
         FD_ZERO(&w);
         FD_SET(fileDescriptor, &w);
-        timeval timoutSides{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
+        timeval timeout{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
 
-        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timoutSides);
+        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timeout);
         if (selectAnswer > 0) {
             int error = 0;
             socklen_t socketLength = sizeof(error);
