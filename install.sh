@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/<you>/KARD.git"
+REPO_URL="https://github.com/anonymmized/KARD.git"
 BRANCH="main"
 INSTALL_DIR="${HOME}/.local/share/kard/src"
 
