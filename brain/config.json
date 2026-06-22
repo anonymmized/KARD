@@ -49,15 +49,25 @@
       "name":"summarize_health",
       "description":"Aggregated server health over a past period (average/peak load, growth, anomalies). Call it when user asks how the server has been doing over time, e.g. 'over the last hour/day'.",
       "parameters":{
-        "period":{"type":"string","description":"Time window to summarize, e.g. '1h', '24h'."}
-      },
-      "required":["period"]
+        "type":"object",
+        "properties":{
+          "period":{"type":"string","description":"Time window to summarize, e.g. '1h', '24h'."}
+        },
+        "required":["period"]
+      }
     }
   },{
     "type":"function",
     "function": {
       "name":"get_temp",
       "description":"Shows current processor's temperature. Call it when user asks what temperature is now.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_network",
+      "description":"Network reachability. Call it hen user asks if the server is online.",
       "parameters":{"type":"object","properties":{},"required":[]}
     }
   }]

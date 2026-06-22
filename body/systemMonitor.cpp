@@ -12,6 +12,12 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <set>
+#include <netdb.h>
+#include <fcntl.h>
+#include <cerrno>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -247,4 +253,40 @@ std::string summarizeHealth(const int seconds) {
     }
     return summary.empty() ? "no data for the last " + std::to_string(seconds / 3600) + "h." : summary;
 
+}
+
+double getTcpProbe(const char* destIp, uint16_t destPort) {
+    int fileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (fileDescriptor < 0) {
+        return -1.0;
+    }
+
+    fcntl(fileDescriptor, F_SETFL, fcntl(fileDescriptor, F_GETFL, 0) | O_NONBLOCK);
+
+    sockaddr_in workingAddress{};
+    workingAddress.sin_family = AF_INET;
+    workingAddress.sin_port = htons(destPort);
+    inet_pton(AF_INET, destIp, &workingAddress.sin_addr);
+
+    double roundTripTime = -1.0;
+    auto tripStart = std::chrono::steady_clock::now();
+    int connectAnswer = connect(fileDescriptor, (sockaddr*)&workingAddress, sizeof(workingAddress));
+    if (connectAnswer < 0 && errno == EINPROGRESS) {
+        fd_set w;
+        FD_ZERO(&w);
+        FD_SET(fileDescriptor, &w);
+        timeval timeout{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
+
+        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timeout);
+        if (selectAnswer > 0) {
+            int error = 0;
+            socklen_t socketLength = sizeof(error);
+            getsockopt(fileDescriptor, SOL_SOCKET, SO_ERROR, &error, &socketLength);
+            if (error == 0) {
+                roundTripTime = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tripStart).count();
+            }
+        }
+    }
+    close(fileDescriptor);
+    return roundTripTime;
 }

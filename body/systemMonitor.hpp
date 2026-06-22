@@ -6,6 +6,7 @@
 inline constexpr int SEC_IN_DAY    = 86400;
 inline constexpr int SEC_IN_HOUR   = 3600;
 inline constexpr int SEC_IN_MINUTE = 60;
+inline constexpr int TIMEOUT_IN_MS = 1000;
 
 struct CpuTimes {
     unsigned long long user = 0, nice = 0, system = 0, idle = 0, iowait = 0, irq = 0, softirq = 0, steal = 0;
@@ -26,3 +27,4 @@ std::string getUptime();
 std::string getAll();
 double getTemp();
 std::string summarizeHealth(const int hours);
+double getTcpProbe(const char* destIp, uint16_t destPort);

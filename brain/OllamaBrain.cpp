@@ -96,6 +96,13 @@ std::string OllamaBrain::ask(const std::string& request) {
                 int hours = parsePeriod(period);
                 std::string v = summarizeHealth(hours);
                 base.push_back({{"role","tool"},{"content",v}});
+            } else if (tool_name == "get_network") {
+                double networkAnswerTime = getTcpProbe("1.1.1.1", 443);
+                if (networkAnswerTime >= 0) {
+                    appendSnapshot("get_network", std::to_string(networkAnswerTime));
+                }
+                std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
+                base.push_back({{"role","tool"},{"content","rtt_ms: " + answerToPush}});
             }
             else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
