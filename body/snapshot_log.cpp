@@ -1,3 +1,5 @@
+#include "paths.hpp"
+
 #include <chrono>
 #include <string>
 #include <fstream>
@@ -6,7 +8,8 @@
 
 int appendSnapshot(const std::string& toolName, const std::string& value) {
     auto currentTime = std::chrono::system_clock::now();
-    std::ofstream fileToWrite(LOG_PATH, std::ios::app);
+    std::string logFilePath = pathToLogFile();
+    std::ofstream fileToWrite(logFilePath, std::ios::app);
     if (!fileToWrite.is_open()) {
         std::cerr << "unable to open log file\n";
         return 1;
