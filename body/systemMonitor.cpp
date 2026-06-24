@@ -1,4 +1,5 @@
 #include "systemMonitor.hpp"
+#include "paths.hpp"
 
 #include <chrono>
 #include <thread>
@@ -213,15 +214,16 @@ std::string getAll() {
 }
 
 std::string summarizeHealth(const int seconds) {
-    std::ifstream fl(LOG_PATH);
-    if (!fl.is_open()) {
+    std::string logFilePath = pathToLogFile();
+    std::ifstream logFile(logFilePath);
+    if (!logFile.is_open()) {
         return "unable to open log file for reading\n";
     }
     std::string line;
     auto now = std::chrono::system_clock::now();
     auto now_ts = std::chrono::system_clock::to_time_t(now);
     std::unordered_map<std::string, std::vector<std::pair<long, double>>> series;
-    while (std::getline(fl, line)) {
+    while (std::getline(logFile, line)) {
         if (line.empty()) continue;
         auto j = nlohmann::json::parse(line, nullptr, false);
         if (j.is_discarded()) continue;
