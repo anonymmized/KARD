@@ -4,6 +4,7 @@
 #include "brain/OllamaBrain.hpp"
 #include "brain/IBrain.hpp"
 #include "body/scheduler.hpp"
+#include "body/paths.hpp"
 #include "selfupdate/selfUpdate.hpp"
 
 #include <iostream>
@@ -23,6 +24,7 @@ void KardCore::run() {
 }
 
 int main(int argc, char** argv) {
+    const std::string logFilePath = pathToLogFile();
     if (argc > 1) {
         std::string cmd = argv[1];
         if (cmd == "--rund") {
