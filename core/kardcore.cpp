@@ -4,6 +4,7 @@
 #include "brain/OllamaBrain.hpp"
 #include "brain/IBrain.hpp"
 #include "body/scheduler.hpp"
+#include "selfupdate/selfUpdate.hpp"
 
 #include <iostream>
 #include <string>
@@ -25,18 +26,36 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         std::string cmd = argv[1];
         if (cmd == "--rund") {
-            if (!installSnapshotJob()) { std::cout << "The daemon wasn't started\n"; return 1; }
+            if (!installSnapshotJob()) {
+                std::cerr << "The daemon wasn't started\n";
+                return 1;
+            }
             std::cout << "The daemon was started with no problems\n";
             return 0;
         }
         if (cmd == "--stopd") {
-            if (!uninstallSnapshotJob()) { std::cout << "The daemon wasn't uninstall\n"; return 1;}
+            if (!uninstallSnapshotJob()) {
+                std::cerr << "The daemon wasn't uninstall\n";
+                return 1;
+            }
             std::cout << "The daemon was uninstall with no problems\n";
             return 0;
         }
         if (cmd == "--statusd") {
-            if (!isSnapshotJobInstalled()) { std::cout << "The daemon is not running\n"; return 0; }
+            if (!isSnapshotJobInstalled()) {
+                std::cout << "The daemon is not running\n";
+                return 0;
+            }
             std::cout << "The daemon is running\n";
+            return 0;
+        }
+        if (cmd == "--update") {
+            int exitCode = runBinaryFileUpdate();
+            if (exitCode != 0) {
+                std::cerr << "Update failed\n";
+                return 1;
+            }
+            std::cout << "Update successfull\n";
             return 0;
         }
         else {
