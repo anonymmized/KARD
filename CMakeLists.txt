@@ -9,6 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 set(CPR_USE_SYSTEM_CURL ON)
+set(BUILD_SHARED_LIBS OFF)
 FetchContent_Declare(
     cpr
     GIT_REPOSITORY https://github.com/libcpr/cpr.git
