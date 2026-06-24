@@ -55,7 +55,11 @@ int main(int argc, char** argv) {
                 std::cerr << "Update failed\n";
                 return 1;
             }
-            std::cout << "Update successfull\n";
+            std::cout << "The program updated successfully\n";
+            return 0;
+        }
+        if (cmd == "--test") {
+            std::cout << "helloworld\n";
             return 0;
         }
         else {
