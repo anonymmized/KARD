@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (cmd == "--test") {
-            std::cout << "helloworld\n";
+            std::cout << "this is a test\n";
             return 0;
         }
         else {
