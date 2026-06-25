@@ -24,7 +24,6 @@ void KardCore::run() {
 }
 
 int main(int argc, char** argv) {
-    const std::string logFilePath = pathToLogFile();
     if (argc > 1) {
         std::string cmd = argv[1];
         if (cmd == "--rund") {
@@ -52,9 +51,13 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (cmd == "--update") {
-            int exitCode = runBinaryFileUpdate();
-            if (exitCode != 0) {
-                std::cerr << "Update failed\n";
+            try {
+                Updater updater;
+                if (updater.runBinaryFileUpdate() != 0) {
+                    return 1;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Update failed: " << e.what() << '\n';
                 return 1;
             }
             std::cout << "The program updated successfully\n";

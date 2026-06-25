@@ -1,3 +1,5 @@
+#include "selfUpdate.hpp"
+
 #include <iostream>
 #include <filesystem>
 #include <unistd.h>
@@ -7,77 +9,50 @@
 #include <climits>
 #endif
 
-std::string getPathToSelf() {
+void Updater::setTempDirectory() {
+    try {
+        TEMP_DIRECTORY = std::filesystem::temp_directory_path() / ("kard-update" + std::to_string(getpid()));
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::string("temp directory set error: ") + e.what());
+    }
+}
+
+void Updater::setPathToSelf() {
 #ifdef __APPLE__
     char bufferForPath[PATH_MAX];
-    uint32_t buffersSize = sizeof(bufferForPath);
-    if (_NSGetExecutablePath(bufferForPath, &buffersSize) != 0) {
-        return "";
+    uint32_t bufferSize = sizeof(bufferForPath);
+    if (_NSGetExecutablePath(bufferForPath, &bufferSize) != 0) {
+        PATH_TO_SELF = "";
+        return;
     }
-    return std::filesystem::canonical(bufferForPath).string();
+    PATH_TO_SELF = std::filesystem::canonical(bufferForPath).string();
 #else
-    return std::filesystem::canonical("/proc/self/exe").string();
+    PATH_TO_SELF = std::filesystem::canonical("/proc/self/exe").string();
 #endif
 }
 
-std::string getHomePath() {
+void Updater::setHomePath() {
     const char* homePath = std::getenv("HOME");
-    return homePath ? homePath : ".";
+    HOME_PATH = homePath ? homePath : ".";
 }
 
-const std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
-const std::string HOME_PATH = getHomePath();
-const std::string UPDATE_LOG_PATH = HOME_PATH + "/.kard/update.log";
-
-std::filesystem::path createTempDirectory() {
-    return std::filesystem::temp_directory_path() / ("kard-update-" + std::to_string(getpid()));
+void Updater::setLogPath() {
+    UPDATE_LOG_PATH = HOME_PATH + "/.kard/update.log";
 }
 
-std::string getCommandToClone(const std::filesystem::path& tempDirectory) {
-    return "git clone --depth 1 " + REPO_URL +  " " + tempDirectory.string();
+std::string Updater::getCommandToClone() {
+    return "git clone --depth 1 " + REPO_URL + " " + TEMP_DIRECTORY.string();
 }
 
-std::string getCommandToConfigureMake(const std::filesystem::path& tempDirectory) {
-    return "cmake -S " + tempDirectory.string() + " -B " + tempDirectory.string() + "/build";
+std::string Updater::getCommandToConfigureMake() {
+    return "cmake -S " + TEMP_DIRECTORY.string() + " -B " + TEMP_DIRECTORY.string() + "/build";
 }
 
-std::string getCommandToMake(const std::filesystem::path& tempDirectory) {
-    return "cmake --build " + tempDirectory.string() + "/build > " + UPDATE_LOG_PATH + " 2>&1";
+std::string Updater::getCommandToMake() {
+    return "cmake --build " + TEMP_DIRECTORY.string() + "/build > " + UPDATE_LOG_PATH + " 2>&1";
 }
 
-int executeCommand(const std::string& command) {
-    if (std::system(command.c_str()) != 0) {
-        std::cerr << "command execution failed\n";
-        return 1;
-    }
-    return 0;
-}
-
-int copyFile(const std::string& oldFile, const std::string& newFile) {
-    std::error_code errorCode;
-
-    std::filesystem::copy_file(oldFile, newFile, std::filesystem::copy_options::overwrite_existing, errorCode);
-
-    if (errorCode) {
-        std::cerr << "copy failed: " << errorCode.message() << '\n';
-        return 1;
-    }
-    return 0;
-}
-
-int renameTargetFile(const std::string& newName, const std::string& oldName) {
-    std::error_code errorCode;
-
-    std::filesystem::rename(newName, oldName, errorCode);
-
-    if (errorCode) {
-        std::cerr << "rename failed: " << errorCode.message() << '\n';
-        return 1;
-    }
-    return 0;
-}
-
-void removeDirectory(const std::string& directoryToRemove) {
+void Updater::removeDirectory(const std::string& directoryToRemove) {
     std::error_code errorCode;
     std::filesystem::remove_all(directoryToRemove, errorCode);
     if (errorCode) {
@@ -85,41 +60,48 @@ void removeDirectory(const std::string& directoryToRemove) {
     }
 }
 
-int runBinaryFileUpdate() {
-    std::filesystem::path tempDirectory = createTempDirectory();
-    std::string pathToBinaryFile = tempDirectory.string() + "/build/kard";
-    std::string pathToCurrentBinary = getPathToSelf();
-    std::string pathToNewBinary = pathToCurrentBinary + ".new";
-
-    std::string commandToClone = getCommandToClone(tempDirectory);
-    if (executeCommand(commandToClone) != 0) {
-        return 1;
+void Updater::executeCommand(const std::string& command) {
+    if (std::system(command.c_str()) != 0) {
+        throw std::runtime_error("command execution failed");
     }
-
-    std::string commandToConfigureMake = getCommandToConfigureMake(tempDirectory);
-    if (executeCommand(commandToConfigureMake) != 0) {
-        removeDirectory(tempDirectory);
-        return 1;
-    }
-
-    std::string commandToMake = getCommandToMake(tempDirectory);
-    if (executeCommand(commandToMake) != 0) {
-        removeDirectory(tempDirectory);
-        return 1;
-    }
-
-    if (copyFile(pathToBinaryFile, pathToNewBinary) != 0) {
-        removeDirectory(tempDirectory);
-        return 1;
-    }
-
-    if (renameTargetFile(pathToNewBinary, pathToCurrentBinary) != 0) {
-        removeDirectory(tempDirectory);
-        return 1;
-    }
-
-    removeDirectory(tempDirectory);
-
-    return 0;
 }
 
+void Updater::copyFile(const std::string& oldFile, const std::string& newFile) {
+    std::error_code errorCode;
+
+    std::filesystem::copy_file(oldFile, newFile, std::filesystem::copy_options::overwrite_existing, errorCode);
+
+    if (errorCode) {
+        throw std::runtime_error(std::string("copy failed: " + errorCode.message()));
+    }
+}
+
+void Updater::renameTargetFile(const std::string& newName, const std::string& oldName) {
+    std::error_code errorCode;
+
+    std::filesystem::rename(newName, oldName, errorCode);
+
+    if (errorCode) {
+        throw std::runtime_error(std::string("rename failed: " + errorCode.message()));
+    }
+}
+
+int Updater::runBinaryFileUpdate() {
+    std::string pathToBinaryFile = TEMP_DIRECTORY.string() + "/build/kard";
+    std::string pathToNewBinary = PATH_TO_SELF + ".new";
+
+    std::string commandToClone = getCommandToClone();
+    std::string commandToConfigureMake = getCommandToConfigureMake();
+    std::string commandToMake = getCommandToMake();
+    try {
+        executeCommand(commandToClone);
+        executeCommand(commandToConfigureMake);
+        executeCommand(commandToMake);
+        copyFile(pathToBinaryFile, pathToNewBinary);
+        renameTargetFile(pathToNewBinary, PATH_TO_SELF);
+    } catch (const std::exception& e) {
+        std::cerr << "update failed: " << e.what() << '\n';
+        return 1;
+    }
+    return 0;
+}
