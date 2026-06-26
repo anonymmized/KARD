@@ -40,16 +40,16 @@ void Updater::setLogPath() {
     UPDATE_LOG_PATH = HOME_PATH + "/.kard/update.log";
 }
 
-std::string Updater::getCommandToClone() {
-    return "git clone --depth 1 " + REPO_URL + " " + TEMP_DIRECTORY.string();
+std::string Updater::getCommandToClone(const std::string& pathToClone) {
+    return "git clone --depth 1 " + REPO_URL + " " + pathToClone;
 }
 
-std::string Updater::getCommandToConfigureMake() {
-    return "cmake -S " + TEMP_DIRECTORY.string() + " -B " + TEMP_DIRECTORY.string() + "/build";
+std::string Updater::getCommandToConfigureMake(const std::string& pathToProject) {
+    return "cmake -S " + pathToProject.string() + " -B " + pathToProject + "/build";
 }
 
-std::string Updater::getCommandToMake() {
-    return "cmake --build " + TEMP_DIRECTORY.string() + "/build > " + UPDATE_LOG_PATH + " 2>&1";
+std::string Updater::getCommandToMake(const std::string& pathToProject) {
+    return "cmake --build " + pathToProject + "/build > " + UPDATE_LOG_PATH + " 2>&1";
 }
 
 void Updater::removeDirectory(const std::string& directoryToRemove) {
@@ -76,7 +76,7 @@ void Updater::copyFile(const std::string& oldFile, const std::string& newFile) {
     }
 }
 
-void Updater::renameTargetFile(const std::string& newName, const std::string& oldName) {
+void Updater::renameTargetFile(const std::string& oldName, const std::string& newName) {
     std::error_code errorCode;
 
     std::filesystem::rename(newName, oldName, errorCode);
@@ -90,9 +90,9 @@ int Updater::runBinaryFileUpdate() {
     std::string pathToBinaryFile = TEMP_DIRECTORY.string() + "/build/kard";
     std::string pathToNewBinary = PATH_TO_SELF + ".new";
 
-    std::string commandToClone = getCommandToClone();
-    std::string commandToConfigureMake = getCommandToConfigureMake();
-    std::string commandToMake = getCommandToMake();
+    std::string commandToClone = getCommandToClone(TEMP_DIRECTORY.string());
+    std::string commandToConfigureMake = getCommandToConfigureMake(TEMP_DIRECTORY.string());
+    std::string commandToMake = getCommandToMake(TEMP_DIRECTORY.string());
     try {
         executeCommand(commandToClone);
         executeCommand(commandToConfigureMake);
@@ -103,5 +103,25 @@ int Updater::runBinaryFileUpdate() {
         std::cerr << "update failed: " << e.what() << '\n';
         return 1;
     }
+    return 0;
+}
+
+int Updater::runFullUpdate() {
+    std::string pathToProject = PATH_TO_SELF.parent_path().parent_path().string();
+    std::string pathToNewProject = pathToProject + ".new";
+
+    std::string commandToClone = getCommandToClone(pathToNewProject);
+    std::string commandToConfigureMake = getCommandToConfigureMake(pathToNewProject);
+    std::string commandToMake = getCommandToMake(pathToNewProject);
+
+    try {
+        renameTargetFile(pathToProject, pathToProject + ".old");
+        renameTargetFile(pathToNewProject, pathToProject);
+        removeDirectory(pathToProject + ".old");
+    } catch (const std::exception& exception) {
+        std::cerr << "update failed: " << exception.what() << '\n';
+        return 1;
+    }
+
     return 0;
 }
