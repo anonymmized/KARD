@@ -63,6 +63,19 @@ int main(int argc, char** argv) {
             std::cout << "The program updated successfully\n";
             return 0;
         }
+        if (cmd == "--full-update") {
+            try {
+                Updater updater;
+                if (updater.runFullUpdate() != 0) {
+                    return 1;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Update failed: " << e.what() << '\n';
+                return 1;
+            }
+            std::cout << "The project updated successfully\n";
+            return 0;
+        }
         if (cmd == "--test") {
             std::cout << "This is a new test string\n";
             return 0;

@@ -45,7 +45,7 @@ std::string Updater::getCommandToClone(const std::string& pathToClone) {
 }
 
 std::string Updater::getCommandToConfigureMake(const std::string& pathToProject) {
-    return "cmake -S " + pathToProject.string() + " -B " + pathToProject + "/build";
+    return "cmake -S " + pathToProject + " -B " + pathToProject + "/build";
 }
 
 std::string Updater::getCommandToMake(const std::string& pathToProject) {
@@ -79,7 +79,7 @@ void Updater::copyFile(const std::string& oldFile, const std::string& newFile) {
 void Updater::renameTargetFile(const std::string& oldName, const std::string& newName) {
     std::error_code errorCode;
 
-    std::filesystem::rename(newName, oldName, errorCode);
+    std::filesystem::rename(oldName, newName, errorCode);
 
     if (errorCode) {
         throw std::runtime_error(std::string("rename failed: " + errorCode.message()));
@@ -107,7 +107,7 @@ int Updater::runBinaryFileUpdate() {
 }
 
 int Updater::runFullUpdate() {
-    std::string pathToProject = PATH_TO_SELF.parent_path().parent_path().string();
+    std::string pathToProject = std::filesystem::path(PATH_TO_SELF).parent_path().parent_path().string();
     std::string pathToNewProject = pathToProject + ".new";
 
     std::string commandToClone = getCommandToClone(pathToNewProject);
@@ -115,6 +115,10 @@ int Updater::runFullUpdate() {
     std::string commandToMake = getCommandToMake(pathToNewProject);
 
     try {
+        executeCommand(commandToClone);
+        executeCommand(commandToConfigureMake);
+        executeCommand(commandToMake);
+
         renameTargetFile(pathToProject, pathToProject + ".old");
         renameTargetFile(pathToNewProject, pathToProject);
         removeDirectory(pathToProject + ".old");

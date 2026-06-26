@@ -16,9 +16,9 @@ class Updater {
         void setHomePath();
         void setLogPath();
 
-        std::string getCommandToClone();
-        std::string getCommandToConfigureMake();
-        std::string getCommandToMake();
+        std::string getCommandToClone(const std::string& pathToClone);
+        std::string getCommandToConfigureMake(const std::string& pathToProject);
+        std::string getCommandToMake(const std::string& pathToProject);
     public:
         Updater() {
             setTempDirectory();
@@ -38,5 +38,6 @@ class Updater {
         void renameTargetFile(const std::string& newName, const std::string& oldName);
 
         int runBinaryFileUpdate();
+        int runFullUpdate();
 };
 
