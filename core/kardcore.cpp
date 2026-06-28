@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (cmd == "--test") {
-            std::cout << "This is a new test string\n";
+            std::cout << "This is a test for full update\n";
             return 0;
         }
         else {
