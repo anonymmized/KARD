@@ -52,12 +52,3 @@ bool DockerChecker::pingDocker(const std::string& candidatePath) {
     return response.status_code == 200;
 }
 
-int main () {
-    DockerChecker checker;
-    if (checker.isDockerRunning()) {
-        std::cout << "docker is running\n";
-        return 0;
-    }
-    std::cout << "docker is not running\n";
-    return 1;
-}
