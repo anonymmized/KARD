@@ -1,3 +1,11 @@
+#include "hostMetrics.hpp"
+
+#include <mach/mach.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
+#include <ctime>
+#include <string>
+
 bool readCpuTimes(CpuTimes &times) {
     host_cpu_load_info_data_t cpuInfo;
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
@@ -37,10 +45,10 @@ bool readRamParts(RamParts& parts) {
     }
 
     uint64_t usedMem = totalMem - available;
-    double usedPercent = (double)used * 100.0 / (double)totalMem;
-    parts.totalMem = totalMem;
+    double usedPercent = (double)usedMem * 100.0 / (double)totalMem;
+    parts.totalMemory = totalMem;
     parts.available = available;
-    parts.used = used;
+    parts.used = usedMem;
     parts.usedPercent = usedPercent;
     return true;
 }
@@ -59,8 +67,8 @@ std::string getUptime() {
     }
     long timeInSec = (long)difftime(currentTime, bootSec);
     long days = timeInSec / SEC_IN_DAY;
-    long hours = (timeInSec & SEC_IN_DAY) / SEC_IN_HOUR;
-    long minutes = (timeInSec & SEC_IN_HOUR)/ SEC_IN_MINUTE;
+    long hours = (timeInSec % SEC_IN_DAY) / SEC_IN_HOUR;
+    long minutes = (timeInSec % SEC_IN_HOUR)/ SEC_IN_MINUTE;
     std::string finalString = std::to_string(days) + "d " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
     return finalString;
 }

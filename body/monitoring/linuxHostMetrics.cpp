@@ -1,3 +1,11 @@
+#include "hostMetrics.hpp"
+
+#include <fstream>
+#include <sstream>
+#include <unordered_map>
+#include <string>
+#include <cstdint>
+
 bool readCpuTimes(CpuTimes &times) {
     std::ifstream fileWithStats("/proc/stat");
     if (!fileWithStats.is_open()) {
@@ -5,7 +13,7 @@ bool readCpuTimes(CpuTimes &times) {
     }
     std::string line;
     std::getline(fileWithStats, line);
-    std::isstringstream ss(line);
+    std::istringstream ss(line);
     std::string cpuLabel;
     ss >> cpuLabel;
     ss >> times.user >> times.nice >> times.system >> times.idle >> times.iowait >> times.irq >> times.softirq >> times.steal;
@@ -61,7 +69,7 @@ std::string getUptime() {
     fileWithUptime >> timeInSec;
     long totalInSec = (long)timeInSec;
     long days = totalInSec / SEC_IN_DAY;
-    long hours = (totalInSec & SEC_IN_DAY) / SEC_IN_HOUR;
+    long hours = (totalInSec % SEC_IN_DAY) / SEC_IN_HOUR;
     long minutes = (totalInSec % SEC_IN_HOUR) / SEC_IN_MINUTE;
     std::string finalString = std::to_string(days) + "d" + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
     return finalString;
