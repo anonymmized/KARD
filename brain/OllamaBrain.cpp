@@ -1,5 +1,5 @@
 #include "OllamaBrain.hpp"
-#include "body/systemMonitor.hpp"
+#include "body/monitoring/monitor.hpp"
 #include "body/snapshot_log.hpp"
 
 #include <fstream>
@@ -81,17 +81,17 @@ std::string OllamaBrain::ask(const std::string& request) {
                 appendSnapshot("get_uptime", v);
                 base.push_back({{"role","tool"},{"content", "uptime: " + v}});
             } else if (tool_name == "get_all") {
-                std::string v = getAll();
+                std::string v = getAllMetrics();
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_temp") {
-                std::string v = std::to_string(getTemp());
-                appendSnapshot("get_temp", v);
-                base.push_back({{"role","tool"},{"content", "temperature_celsius: " + v}});
-            }
-            else if (tool_name == "summarize_health") {
+                std::string currentTempText = std::to_string(getTemp());
+                appendSnapshot("get_temp", currentTempText);
+                base.push_back({{"role","tool"},{"content", "temperature_celsius: " + currentTempText}});
+            } else if (tool_name == "summarize_health") {
                 auto args = call["function"]["arguments"];
-                if (args.is_string()) args = nlohmann::json::parse(args.get<std::string>());
-
+                if (args.is_string()) {
+                    args = nlohmann::json::parse(args.get<std::string>());
+                }
                 std::string period = args.value("period", "1h");
                 int hours = parsePeriod(period);
                 std::string v = summarizeHealth(hours);
@@ -103,6 +103,10 @@ std::string OllamaBrain::ask(const std::string& request) {
                 }
                 std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
                 base.push_back({{"role","tool"},{"content","rtt_ms: " + answerToPush}});
+            } else if (tool_name == "get_docker_status") {
+                DockerChecker checker;
+                std::string dockerStatusText = checker.isDockerRunning() ? "true" : "false";
+                base.push_back({{"role", "tool"},{"content","docker is running: " + dockerStatusText}});
             }
             else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});

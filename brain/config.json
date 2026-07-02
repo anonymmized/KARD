@@ -5,7 +5,7 @@
   "options":{
     "temperature":0.3,
     "top_p":0.9,
-    "num_predict":120
+    "num_predict":-1
   },
   "stream":false,
   "tools": [{
@@ -68,6 +68,13 @@
     "function": {
       "name":"get_network",
       "description":"Network reachability. Call it hen user asks if the server is online.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_docker_status",
+      "description":"Check if docker is running now. Call it when user asks if the docker container is running.",
       "parameters":{"type":"object","properties":{},"required":[]}
     }
   }]
