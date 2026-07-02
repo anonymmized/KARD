@@ -1,4 +1,5 @@
 #include "hostMetrics.hpp"
+#include "dockerMetrics.hpp"
 #include "body/paths.hpp"
 
 #include <chrono>
@@ -138,4 +139,55 @@ double getTcpProbe(const char* destIp, uint16_t destPort) {
     }
     close(fileDescriptor);
     return roundTripTime;
+}
+
+std::string summarizeHealth(const int seconds) {
+    std::string logFilePath = pathToLogFile();
+    std::ifstream logFile(logFilePath);
+    if (!logFile.is_open()) {
+        return "unable to open log file for reading\n";
+    }
+    std::string line;
+    auto now = std::chrono::system_clock::now();
+    auto now_ts = std::chrono::system_clock::to_time_t(now);
+    std::unordered_map<std::string, std::vector<std::pair<long, double>>> series;
+    while (std::getline(logFile, line)) {
+        if (line.empty()) {
+            continue;
+        }
+        auto jsonParsed = nlohmann::json::parse(line, nullptr, false);
+        if (jsonParsed.is_discarded()) {
+            continue;
+        }
+        long ts = jsonParsed["ts"].get<long>();
+        if (now_ts - ts > seconds) {
+            continue;
+        }
+        static const std::set<std::string> numeric = {"get_cpu", "get_ram", "get_temp"};
+        std::string tool = jsonParsed["tool"].get<std::string>();
+        if (!numeric.count(tool)) {
+            continue;
+        }
+
+        try {
+            series[tool].push_back({ts, std::stod(jsonParsed["value"].get<std::string>())});
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+
+    std::string summary;
+    for (auto& [key, value] : series) {
+        std::sort(value.begin(), value.end(), [](const auto& a, const auto& b){ return a.first < b.first; });
+        double sum = 0.0, peak = value.front().second;
+        for (const auto& [ts, val] : value) {
+            sum += val;
+            peak = std::max(peak, val);
+        }
+
+        double avg = sum / value.size();
+        double growth = value.back().second - value.front().second;
+        summary += key + ": avg " + std::to_string(avg) + ", peak " + std::to_string(peak) + ", change " + std::to_string(growth) + " (" + std::to_string(value.size()) + " samples)\n";
+    }
+    return summary.empty() ? "no data for the last " + std::to_string(seconds / 3600) + "h. " : summary;
 }

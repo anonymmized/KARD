@@ -1,7 +1,6 @@
 #include "OllamaBrain.hpp"
-#include "body/systemMonitor.hpp"
+#include "body/monitoring/monitor.hpp"
 #include "body/snapshot_log.hpp"
-#include "body/dockerMonitoring.hpp"
 
 #include <fstream>
 #include <cpr/cpr.h>
@@ -82,7 +81,7 @@ std::string OllamaBrain::ask(const std::string& request) {
                 appendSnapshot("get_uptime", v);
                 base.push_back({{"role","tool"},{"content", "uptime: " + v}});
             } else if (tool_name == "get_all") {
-                std::string v = getAll();
+                std::string v = getAllMetrics();
                 base.push_back({{"role","tool"},{"content", v}});
             } else if (tool_name == "get_temp") {
                 std::string currentTempText = std::to_string(getTemp());
