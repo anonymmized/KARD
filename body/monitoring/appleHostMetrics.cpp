@@ -9,7 +9,7 @@
 bool readCpuTimes(CpuTimes &times) {
     host_cpu_load_info_data_t cpuInfo;
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO_COUNT, (host_info_t)&cpuInfo, &count) != KERN_SUCCESS) {
+    if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpuInfo, &count) != KERN_SUCCESS) {
         return false;
     }
     times.user = cpuInfo.cpu_ticks[CPU_STATE_USER];
@@ -26,7 +26,7 @@ double getTemp() {
 bool readRamParts(RamParts& parts) {
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
     vm_statistics64_data_t vmstat;
-    if (host_statistics(mach_host_self(), HOST_VM_INFO64, reinterpret_cast<host_info_t>(&vmstat), &count) != KERN_SUCCESS) {
+    if (host_statistics64(mach_host_self(), HOST_VM_INFO64, reinterpret_cast<host_info_t>(&vmstat), &count) != KERN_SUCCESS) {
         return false;
     }
 

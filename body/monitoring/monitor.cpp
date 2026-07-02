@@ -1,4 +1,22 @@
+#include "hostMetrics.hpp"
+#include "body/paths.hpp"
 
+#include <chrono>
+#include <thread>
+#include <string>
+#include <vector>
+#include <set>
+#include <unordered_map>
+#include <algorithm>
+#include <fstream>
+#include <filesystem>
+#include <nlohmann/json.hpp>
+#include <fcntl.h>
+#include <cerrno>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 double computeUsage(const CpuTimes& prev, const CpuTimes& curr) {
     using ull = unsigned long long;
@@ -53,7 +71,7 @@ double getCpuUsage(int delayMs) {
 double getRamUsage() {
     RamParts parts;
     if (!readRamParts(parts)) {
-        return -1,0;
+        return -1.0;
     }
     return parts.usedPercent;
 }
