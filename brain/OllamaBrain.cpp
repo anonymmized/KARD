@@ -107,6 +107,8 @@ std::string OllamaBrain::ask(const std::string& request) {
                 base.push_back({{"role", "tool"},{"content", checkIfDockerIsRunning()}});
             } else if (tool_name == "get_docker_running") {
                 base.push_back({{"role", "tool"},{"content", getNumOfRunningContainers()}});
+            } else if (tool_name == "get_docker_list") {
+                base.push_back({{"role", "tool"},{"content", getContainersList()}});
             }
             else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});

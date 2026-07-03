@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 class DockerChecker {
     private:
@@ -15,18 +16,23 @@ class DockerChecker {
 
         std::vector<std::string> candidates;
 
+        std::vector<nlohmann::json> containersResponses;
+
+        void setContainersResponses();
+
         void addToCandidates(const std::string& candidateToAdd);
         bool pingDocker(const std::string& candidatePath);
         bool isPrefixInPath(const std::string& candidate);
         bool findDockerSocket();
         void addCandidateByPath(const std::string& pathToCheck);
-        int findCountRunningContainers(const std::string& candidatePath);
 
     public:
         DockerChecker();
         bool isDockerRunning();
         int getCountRunningContainers();
+        std::string listContainers();
 };
 
+std::string getContainersList();
 std::string checkIfDockerIsRunning();
 std::string getNumOfRunningContainers();
