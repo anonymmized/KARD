@@ -6,10 +6,10 @@
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
-void DockerChecker::setContainersResponses() {
+void DockerChecker::setContainersResponses(const std::string& urlToGet) {
     containersResponses.clear();
     for (auto& candidate : candidates) {
-        cpr::Response response = cpr::Get(cpr::Url{DOCKER_NUM_CONT_URL}, cpr::UnixSocket{candidate}, cpr::Timeout{1000});
+        cpr::Response response = cpr::Get(cpr::Url{urlToGet}, cpr::UnixSocket{candidate}, cpr::Timeout{1000});
         if (response.status_code != 200) {
             continue;
         }
@@ -75,7 +75,7 @@ bool DockerChecker::pingDocker(const std::string& candidatePath) {
 }
 
 int DockerChecker::getCountRunningContainers() {
-    setContainersResponses();
+    setContainersResponses(DOCKER_NUM_CONT_URL);
     if (!containersResponses.empty()) {
         int runningCount = static_cast<int>(containersResponses.front().size());
         return runningCount;
@@ -84,7 +84,7 @@ int DockerChecker::getCountRunningContainers() {
 }
 
 std::string DockerChecker::listContainers() {
-    setContainersResponses();
+    setContainersResponses(DOCKER_LIST_URL);
     if (containersResponses.empty()) return "no containers";
     std::string finalString;
     for (const auto& response : containersResponses.front()) {
