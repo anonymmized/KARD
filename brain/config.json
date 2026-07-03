@@ -77,5 +77,19 @@
       "description":"Check if docker is running now. Call it when user asks if the docker container is running.",
       "parameters":{"type":"object","properties":{},"required":[]}
     }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_docker_running",
+      "description":"Get the number of currently running docker containers. Call it when user asks how many containers are running.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
+  },{
+    "type":"function",
+    "function": {
+      "name":"get_docker_list",
+      "description":"List docker containers with their names and state (running/exited). Call it when user asks which containers exist or their status.",
+      "parameters":{"type":"object","properties":{},"required":[]}
+    }
   }]
 }
