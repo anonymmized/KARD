@@ -104,9 +104,9 @@ std::string OllamaBrain::ask(const std::string& request) {
                 std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
                 base.push_back({{"role","tool"},{"content","rtt_ms: " + answerToPush}});
             } else if (tool_name == "get_docker_status") {
-                DockerChecker checker;
-                std::string dockerStatusText = checker.isDockerRunning() ? "true" : "false";
-                base.push_back({{"role", "tool"},{"content","docker is running: " + dockerStatusText}});
+                base.push_back({{"role", "tool"},{"content", checkIfDockerIsRunning()}});
+            } else if (tool_name == "get_docker_running") {
+                base.push_back({{"role", "tool"},{"content", getNumOfRunningContainers()}});
             }
             else {
                 base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
