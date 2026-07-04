@@ -5,6 +5,7 @@
 #include "brain/IBrain.hpp"
 #include "body/scheduler.hpp"
 #include "body/paths.hpp"
+#include "voice/voice.hpp"
 #include "selfupdate/selfUpdate.hpp"
 
 #include <iostream>
@@ -18,6 +19,7 @@ void KardCore::run() {
         if (req == "/exit") return;
         output.startThinking();
         std::string ans = brain.ask(req);
+
         output.stopThinking();
         output.show(ans);
     }
@@ -87,10 +89,11 @@ int main(int argc, char** argv) {
     }
     std::vector<nlohmann::json> base;
     TerminalInput t_input;
+    VoiceOutput v_output;
     TerminalOutput t_output;
     OllamaBrain ollama(base);
     IInput& input = t_input;
-    IOutput& output = t_output;
+    IOutput& output = v_output;
     IBrain& brain = ollama;
     std::cout << "user: ";
     KardCore core(input, output, brain);
