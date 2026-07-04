@@ -11,6 +11,7 @@ class DockerChecker {
         const std::string LINUX_PATH_TO_SOCKET = "/var/run/docker.sock";
         const std::string DOCKER_PING_URL = "http://localhost/_ping";
         const std::string DOCKER_NUM_CONT_URL = "http://localhost/containers/json";
+        const std::string DOCKER_LIST_URL = "http://localhost/containers/json?all=true";
         const std::string HOME_DIRECTORY;
         const std::string DOCKER_HOST;
 
@@ -18,7 +19,7 @@ class DockerChecker {
 
         std::vector<nlohmann::json> containersResponses;
 
-        void setContainersResponses();
+        void setContainersResponses(const std::string& urlToGet);
 
         void addToCandidates(const std::string& candidateToAdd);
         bool pingDocker(const std::string& candidatePath);
