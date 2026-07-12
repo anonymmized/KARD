@@ -91,9 +91,10 @@ int main(int argc, char** argv) {
     TerminalInput t_input;
     VoiceOutput v_output;
     TerminalOutput t_output;
+    CompositeOutput c_output(t_output, v_output);
     OllamaBrain ollama(base);
     IInput& input = t_input;
-    IOutput& output = v_output;
+    IOutput& output = c_output;
     IBrain& brain = ollama;
     std::cout << "user: ";
     KardCore core(input, output, brain);

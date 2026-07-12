@@ -91,6 +91,7 @@ std::string getDiskSpace() {
     return finalString;
 }
 
+// MAIN
 std::string getAllMetrics() {
     double cpuUsage = getCpuUsage();
     double ramUsage = getRamUsage();

@@ -21,3 +21,14 @@ class TerminalOutput : public IOutput {
         void startThinking();
         void stopThinking();
 };
+
+class CompositeOutput : public IOutput {
+    private:
+        IOutput& terminalOutputLink;
+        IOutput& voiceOutputLink;
+    public:
+        CompositeOutput(IOutput& first, IOutput& second) : terminalOutputLink(first), voiceOutputLink(second) {}
+        void show(const std::string& text);
+        void startThinking();
+        void stopThinking();
+};

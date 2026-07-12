@@ -26,3 +26,18 @@ void TerminalOutput::startThinking() {
         std::cout << "\r\033[K" << std::flush;
     });
 }
+
+void CompositeOutput::show(const std::string& text) {
+    terminalOutputLink.show(text);
+    voiceOutputLink.show(text);
+}
+
+void CompositeOutput::startThinking() {
+    terminalOutputLink.startThinking();
+    voiceOutputLink.startThinking();
+}
+
+void CompositeOutput::stopThinking() {
+    terminalOutputLink.stopThinking();
+    voiceOutputLink.stopThinking();
+}
