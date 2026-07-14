@@ -15,11 +15,12 @@
 
 void KardCore::run() {
     while (true) {
-        std::string req = input.read();
-        if (req == "/exit") return;
+        std::string userText = input.read();
+        if (userText == "/exit") {
+            return;
+        }
         output.startThinking();
-        std::string ans = brain.ask(req);
-
+        std::string ans = brain.ask(userText);
         output.stopThinking();
         output.show(ans);
     }
