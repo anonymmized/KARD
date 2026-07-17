@@ -7,6 +7,7 @@
 #include "body/paths.hpp"
 #include "voice/voice.hpp"
 #include "selfupdate/selfUpdate.hpp"
+#include "core/argsParse.hpp"
 
 #include <iostream>
 #include <string>
@@ -26,7 +27,57 @@ void KardCore::run() {
     }
 }
 
+int executeArgs(CliArguments arguments) {
+    int exitCode;
+    if (arguments.mode == Mode::StartDaemon) {
+        exitCode = startDaemon();
+    }
+    if (arguments.mode == Mode::StopDaemon) {
+        stopDaemon();
+    }
+    if (argument.mode == Mode::DaemonStatus) {
+        getDaemonStatus();
+    }
+    if (argument.mode == Mode::Update) {
+        getBasicUpdate();
+    }
+    if (argument.mode == Mode::FullUpdate) {
+        getFullUpdate();
+    }
+    if (argument.mode == Mode::Test) {
+        testArgument();
+    }
+    if (argument.mode == Mode::Help) {
+        printHelpPage();
+    }
+    if (argument.mode == Mode::Unknown) {
+        std::cout << "There is no argument like this\n";
+        printHelpPage();
+    }
+    return exitCode;
+}
+
+int startDaemon() {
+    if (!installSnapshotJob()) {
+        std::cerr << "The daemon wasn't started\n";
+        return 1;
+    }
+    std::cout << "The daemon was started\n";
+    return 0;
+}
+
+int stopDaemon() {
+    if (!uninstallSnapshotJob()) {
+        std::cerr << "The daemon wasn't uninstall\n";
+        return 1;
+    }
+    std::cout << "The daemon was uninstall\n";
+    return 0;
+}
+
 int main(int argc, char** argv) {
+    ArgumentParser parser(argc, argv);
+    CliArguments args = parser.parseArguments();
     if (argc > 1) {
         std::string cmd = argv[1];
         if (cmd == "--rund") {
