@@ -19,7 +19,7 @@ CliArguments ArgumentParser::parseArguments() {
             args.errorOut = "There is no argument like " + currArg + ". Please try again with valid argument.\n";
         }
     }
-    return args.
+    return args;
 }
 
 bool ArgumentParser::checkIfArgumentsInstalled() {
