@@ -16,7 +16,7 @@ enum class Mode {
 
 struct CliArguments {
     Mode mode = Mode::Repl;
-    bool voice = true;
+    bool voice = false;
     std::string errorOut;
 };
 

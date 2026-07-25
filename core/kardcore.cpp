@@ -14,6 +14,8 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+constexpr int RUN_CHAT = 2;
+
 void KardCore::run() {
     while (true) {
         std::string userText = interfaces.input.read();
@@ -28,36 +30,21 @@ void KardCore::run() {
 }
 
 int executeArgs(CliArguments arguments) {
-    int exitCode = 0;
-    if (arguments.mode == Mode::StartDaemon) {
-        exitCode = startDaemon();
+    switch (arguments.mode) {
+        case Mode::StartDaemon:  return startDaemon();
+        case Mode::StopDaemon:   return stopDaemon();
+        case Mode::DaemonStatus: return getDaemonStatus();
+        case Mode::Update:       return getBasicUpdate();
+        case Mode::FullUpdate:   return getFullUpdate();
+        case Mode::Test:         testArgument(); return 0;
+        case Mode::Help:         printHelpPage(); return 0;
+        case Mode::Unknown:
+            std::cout << "There is no argument like this\n";
+            printHelpPage();
+            return 0;
+        case Mode::Repl:         return RUN_CHAT;
     }
-    if (arguments.mode == Mode::StopDaemon) {
-        exitCode = stopDaemon();
-    }
-    if (arguments.mode == Mode::DaemonStatus) {
-        exitCode = getDaemonStatus();
-    }
-    if (arguments.mode == Mode::Update) {
-        exitCode = getBasicUpdate();
-    }
-    if (arguments.mode == Mode::FullUpdate) {
-        exitCode = getFullUpdate();
-    }
-    if (arguments.mode == Mode::Test) {
-        testArgument();
-    }
-    if (arguments.mode == Mode::Help) {
-        printHelpPage();
-    }
-    if (arguments.mode == Mode::Unknown) {
-        std::cout << "There is no argument like this\n";
-        printHelpPage();
-    }
-    if (arguments.mode == Mode::Repl) {
-        exitCode = 2;
-    }
-    return exitCode;
+    return 0;
 }
 
 int startDaemon() {
@@ -125,7 +112,7 @@ void printHelpPage() {
 
 ReplInterfaces bindInterfaces(ReplComponents& components) {
     return { components.terminalInput,
-             components.compositeOutput,
+             components.output,
              components.brain
     };
 }
@@ -134,12 +121,18 @@ int main(int argc, char** argv) {
     ArgumentParser parser(argc, argv);
     CliArguments args = parser.parseArguments();
     int exitCode = executeArgs(args);
-    if (exitCode != 2) {
+    if (exitCode != RUN_CHAT) {
         return exitCode;
     }
     std::vector<nlohmann::json> base;
     OllamaBrain ollama(base);
-    ReplComponents components(ollama);
+    TerminalOutput terminalOutput;
+    VoiceOutput voiceOutput;
+    CompositeOutput compositeOutput(terminalOutput, voiceOutput);
+    IOutput& output = args.voice
+        ? static_cast<IOutput&>(compositeOutput)
+        : static_cast<IOutput&>(terminalOutput);
+    ReplComponents components(ollama, output);
     ReplInterfaces io = bindInterfaces(components);
     std::cout << "user: ";
     KardCore core(io);

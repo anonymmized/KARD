@@ -9,13 +9,11 @@
 
 struct ReplComponents {
     TerminalInput terminalInput;
-    TerminalOutput terminalOutput;
-    VoiceOutput voiceOutput;
-    CompositeOutput compositeOutput;
+    IOutput& output;
     IBrain& brain;
 
-    ReplComponents(IBrain& brainDependency)
-        : compositeOutput(terminalOutput, voiceOutput),
+    ReplComponents(IBrain& brainDependency, IOutput& out)
+        : output(out),
           brain(brainDependency) {}
 };
 
@@ -43,3 +41,4 @@ int getBasicUpdate();
 int getFullUpdate();
 void testArgument();
 void printHelpPage();
+
