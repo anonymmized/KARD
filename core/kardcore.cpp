@@ -16,14 +16,14 @@
 
 void KardCore::run() {
     while (true) {
-        std::string userText = input.read();
+        std::string userText = interfaces.input.read();
         if (userText == "/exit") {
             return;
         }
-        output.startThinking();
-        std::string ans = brain.ask(userText);
-        output.stopThinking();
-        output.show(ans);
+        interfaces.output.startThinking();
+        std::string ans = interfaces.brain.ask(userText);
+        interfaces.output.stopThinking();
+        interfaces.output.show(ans);
     }
 }
 
@@ -123,26 +123,26 @@ void printHelpPage() {
     std::cout << "This is a page for help\n";
 }
 
-
+ReplInterfaces bindInterfaces(ReplComponents& components) {
+    return { components.terminalInput,
+             components.compositeOutput,
+             components.brain
+    };
+}
 
 int main(int argc, char** argv) {
     ArgumentParser parser(argc, argv);
     CliArguments args = parser.parseArguments();
     int exitCode = executeArgs(args);
     if (exitCode != 2) {
-        return 0;
+        return exitCode;
     }
     std::vector<nlohmann::json> base;
-    TerminalInput t_input;
-    VoiceOutput v_output;
-    TerminalOutput t_output;
-    CompositeOutput c_output(t_output, v_output);
     OllamaBrain ollama(base);
-    IInput& input = t_input;
-    IOutput& output = c_output;
-    IBrain& brain = ollama;
+    ReplComponents components(ollama);
+    ReplInterfaces io = bindInterfaces(components);
     std::cout << "user: ";
-    KardCore core(input, output, brain);
+    KardCore core(io);
     core.run();
-    return 1;
+    return 0;
 }
