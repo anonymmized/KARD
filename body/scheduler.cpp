@@ -17,18 +17,6 @@ namespace {
         return std::system(cmd.c_str()) == 0;
     }
 
-    bool unloadJob() {
-        return run("launchctl bootout " + getUserDomain() + "/" + LABEL + " 2>/dev/null");
-    }
-
-    bool loadJob(const std::string& plistPath) {
-        return run("launchctl bootstrap " + getUserDomain() + " " + plistPath);
-    }
-
-    bool isJobLoaded() {
-        return run("launchctl print " + getUserDomain() + "/" + LABEL + " >/dev/null 2>&1");
-    }
-
     bool writeFile(const std::string& path, const std::string& textToWrite) {
         std::ofstream outFile(path, std::ios::trunc);
         if (!outFile.is_open()) return false;
@@ -59,8 +47,20 @@ namespace {
         return "gui/" + std::to_string(getuid());
     }
 
-    std::string getPlistPath(const char* homePath) {
+    std::string getPlistPath(const std::string homePath) {
         return std::string(homePath) + PATH_TO_AGENTS + LABEL + ".plist";
+    }
+
+    bool unloadJob() {
+        return run("launchctl bootout " + getUserDomain() + "/" + LABEL + " 2>/dev/null");
+    }
+
+    bool loadJob(const std::string& plistPath) {
+        return run("launchctl bootstrap " + getUserDomain() + " " + plistPath);
+    }
+
+    bool isJobLoaded() {
+        return run("launchctl print " + getUserDomain() + "/" + LABEL + " >/dev/null 2>&1");
     }
 
     std::string getPlistBody() {
