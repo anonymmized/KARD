@@ -14,6 +14,7 @@ CliArguments ArgumentParser::parseArguments() {
         else if (currArg == "--full-update") { args.mode = Mode::FullUpdate; }
         else if (currArg == "--test") { args.mode = Mode::Test; }
         else if (currArg == "--help" || currArg == "-h") { args.mode = Mode::Help; }
+        else if (currArg == "--voice" || currArg == "-v") { args.voice = true; }
         else {
             args.mode = Mode::Unknown;
             args.errorOut = "There is no argument like " + currArg + ". Please try again with valid argument.\n";
