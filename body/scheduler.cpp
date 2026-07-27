@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
+#include <optional>
 
 #ifndef SNAPSHOT_BIN
 #define SNAPSHOT_BIN "kard-snapshot"
@@ -16,6 +17,18 @@ namespace {
         return std::system(cmd.c_str()) == 0;
     }
 
+    bool unloadJob() {
+        return run("launchctl bootout " + getUserDomain() + "/" + LABEL + " 2>/dev/null");
+    }
+
+    bool loadJob(const std::string& plistPath) {
+        return run("launchctl bootstrap " + getUserDomain() + " " + plistPath);
+    }
+
+    bool isJobLoaded() {
+        return run("launchctl print " + getUserDomain() + "/" + LABEL + " >/dev/null 2>&1");
+    }
+
     bool writeFile(const std::string& path, const std::string& textToWrite) {
         std::ofstream outFile(path, std::ios::trunc);
         if (!outFile.is_open()) return false;
@@ -23,8 +36,16 @@ namespace {
         return true;
     }
 
-    const char* homeDir() {
+    const char* getHomeDir() {
         return std::getenv("HOME");
+    }
+
+    std::optional<std::string> resolveHomeDir() {
+        const char* homePath = getHomeDir();
+        if (!homePath) {
+            return std::nullopt;
+        }
+        return std::string(homePath);
     }
 }
 
@@ -32,16 +53,17 @@ namespace {
 
 namespace {
     const std::string LABEL = "com.kard.snapshot";
+    const std::string PATH_TO_AGENTS = "/Library/LaunchAgents/";
 
-    std::string userDomain() {
+    std::string getUserDomain() {
         return "gui/" + std::to_string(getuid());
     }
 
-    std::string plistPath(const char* home) {
-        return std::string(home) + "/Library/LaunchAgents/" + LABEL + ".plist";
+    std::string getPlistPath(const char* homePath) {
+        return std::string(homePath) + PATH_TO_AGENTS + LABEL + ".plist";
     }
 
-    std::string plistBody() {
+    std::string getPlistBody() {
         return
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
@@ -67,37 +89,40 @@ namespace {
 }
 
 bool installSnapshotJob() {
-    const char* home = homeDir();
-    if (!home) {
-        std::cerr << "scheduler: $HOME is not set\n"; return false;
+    std::optional<std::string> homePath = resolveHomeDir();
+    if (!homePath) {
+        return false;
     }
 
-    std::error_code ec;
-    std::filesystem::create_directories(std::string(home) + "/Library/LaunchAgents", ec);
+    std::error_code errorCode;
+    std::filesystem::create_directories(*homePath + PATH_TO_AGENTS, errorCode);
 
-    if (!writeFile(plistPath(home), plistBody())) {
+    std::string plistBody = getPlistBody();
+    std::string plistPath = getPlistPath(*homePath);
+    if (!writeFile(plistPath, plistBody)) {
         std::cerr << "scheduler: failed to write plist\n";
         return false;
     }
 
-    run("launchctl bootout " + userDomain() + "/" + LABEL + " 2>/dev/null");
-    return run("launchctl bootstrap " + userDomain() + " " + plistPath(home));
+    unloadJob();
+    return loadJob(plistPath);
 }
 
 bool uninstallSnapshotJob() {
-    const char* home = homeDir();
-    if (!home) {
-        std::cerr << "scheduler: $HOME is not set\n"; return false;
+    std::optional<std::string> homePath = resolveHomeDir();
+    if (!homePath) {
+        return false;
     }
+    unloadJob();
 
-    run("launchctl bootout " + userDomain() + "/" + LABEL + " 2>/dev/null");
-    std::error_code ec;
-    std::filesystem::remove(plistPath(home), ec);
+    std::error_code errorCode;
+    std::string plistPath = getPlistPath(*homePath);
+    std::filesystem::remove(plistPath, errorCode);
     return true;
 }
 
 bool isSnapshotJobInstalled() {
-    return run("launchctl print " + userDomain() + "/" + LABEL + " >/dev/null 2>&1");
+    return isJobLoaded();
 }
 
 #else
