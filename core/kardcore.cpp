@@ -3,7 +3,7 @@
 #include "brain/IOutput.hpp"
 #include "brain/OllamaBrain.hpp"
 #include "brain/IBrain.hpp"
-#include "body/scheduler.hpp"
+#include "body/scheduler/scheduler.hpp"
 #include "body/paths.hpp"
 #include "voice/voice.hpp"
 #include "selfupdate/selfUpdate.hpp"
