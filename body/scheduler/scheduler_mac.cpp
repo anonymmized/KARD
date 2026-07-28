@@ -8,7 +8,7 @@
 #include <iostream>
 
 #ifndef SNAPSHOT_BIN
-#define SNAPSHOT_BIN
+#define SNAPSHOT_BIN "kard-snapshot"
 #endif
 
 namespace {

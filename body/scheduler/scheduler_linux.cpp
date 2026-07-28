@@ -6,22 +6,39 @@
 #include <optional>
 
 #ifndef SNAPSHOT_BIN
-#define SNAPSHOT_BIN
+#define SNAPSHOT_BIN "kard-snapshot"
 #endif
 
 namespace {
     const std::string TIMER = "kard-snapshot.timer";
+    const std::string SERVICE = "kard-snapshot.service";
 
     std::string unitDir(const std::string& home) {
         return std::string(home) + "/.config/systemd/user";
     }
 
     std::string svcPath(const std::string& home) {
-        return unitDir(home) + "/kard-snapshot.service";
+        return unitDir(home) + "/" + SERVICE;
     }
 
     std::string timerPath(const std::string& home) {
         return unitDir(home) + "/" + TIMER;
+    }
+
+    bool reloadDaemon() {
+        return run("systemctl --user daemon-reload");
+    }
+
+    bool enableDaemon() {
+        return run("systemctl --user enable --now " + TIMER);
+    }
+
+    bool disableDaemon() {
+        return run("systemctl --user disable --now " + TIMER + " 2>/dev/null");
+    }
+
+    bool checkIfDaemonRunning() {
+        return run("systemctl --user is-active --quiet " + TIMER);
     }
 
     std::string serviceBody() {
@@ -59,8 +76,8 @@ bool installSnapshotJob() {
         return false;
     }
 
-    run("systemctl --user daemon-reload");
-    return run("systemctl --user enable --now " + TIMER);
+    reloadDaemon();
+    return enableDaemon();
 }
 
 bool uninstallSnapshotJob() {
@@ -69,14 +86,14 @@ bool uninstallSnapshotJob() {
         return false;
     }
 
-    run("systemctl --user disable --now " + TIMER + " 2>/dev/null");
+    disableDaemon();
     std::error_code errorCode;
     std::filesystem::remove(svcPath(homePath), errorCode);
     std::filesystem::remove(timerPath(homePath), errorCode);
-    run("systemctl --user daemon-reload");
+    reloadDaemon();
     return true;
 }
 
 bool isSnapshotJobInstalled() {
-    return run("systemctl --user is-active --quiet " + TIMER);
+    return checkIfDaemonRunning();
 }
