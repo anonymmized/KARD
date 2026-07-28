@@ -3,13 +3,17 @@
 #include <filesystem>
 #include <string>
 
+struct UpdaterHelper {
+    std::string HOME_PATH;
+    std::string LOG_PATH_TO_UPDATE;
+    std::string TEMP_PATH;
+    std::string PATH_TO_SELF;
+};
+
 class Updater {
     private:
-        const std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
-        std::string HOME_PATH;
-        std::string UPDATE_LOG_PATH;
-        std::filesystem::path TEMP_DIRECTORY;
-        std::string PATH_TO_SELF;
+        constexpr std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
+        UpdaterHelper allPaths;
 
         void setTempDirectory();
         void setPathToSelf();
@@ -28,7 +32,7 @@ class Updater {
         }
 
         ~Updater() {
-            removeDirectory(TEMP_DIRECTORY.string());
+            removeDirectory(allPaths.TEMP_PATH);
         }
 
         void removeDirectory(const std::string& directoryToRemove);

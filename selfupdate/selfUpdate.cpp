@@ -3,6 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <unistd.h>
+#include <string>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -11,7 +12,7 @@
 
 void Updater::setTempDirectory() {
     try {
-        TEMP_DIRECTORY = std::filesystem::temp_directory_path() / ("kard-update" + std::to_string(getpid()));
+        allPaths.TEMP_PATH = (std::filesystem::temp_directory_path() / ("kard-update" + std::to_string(getpid()))).string();
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string("temp directory set error: ") + e.what());
     }
@@ -22,22 +23,22 @@ void Updater::setPathToSelf() {
     char bufferForPath[PATH_MAX];
     uint32_t bufferSize = sizeof(bufferForPath);
     if (_NSGetExecutablePath(bufferForPath, &bufferSize) != 0) {
-        PATH_TO_SELF = "";
+        allPaths.PATH_TO_SELF = "";
         return;
     }
-    PATH_TO_SELF = std::filesystem::canonical(bufferForPath).string();
+    allPaths.PATH_TO_SELF = std::filesystem::canonical(bufferForPath).string();
 #else
-    PATH_TO_SELF = std::filesystem::canonical("/proc/self/exe").string();
+    allPaths.PATH_TO_SELF = std::filesystem::canonical("/proc/self/exe").string();
 #endif
 }
 
 void Updater::setHomePath() {
     const char* homePath = std::getenv("HOME");
-    HOME_PATH = homePath ? homePath : ".";
+    allPaths.HOME_PATH = homePath ? homePath : ".";
 }
 
 void Updater::setLogPath() {
-    UPDATE_LOG_PATH = HOME_PATH + "/.kard/update.log";
+    allPaths.LOG_PATH_TO_UPDATE = allPaths.HOME_PATH + "/.kard/update.log";
 }
 
 std::string Updater::getCommandToClone(const std::string& pathToClone) {
@@ -49,7 +50,7 @@ std::string Updater::getCommandToConfigureMake(const std::string& pathToProject)
 }
 
 std::string Updater::getCommandToMake(const std::string& pathToProject) {
-    return "cmake --build " + pathToProject + "/build > " + UPDATE_LOG_PATH + " 2>&1";
+    return "cmake --build " + pathToProject + "/build > " + allPaths.LOG_PATH_TO_UPDATE + " 2>&1";
 }
 
 void Updater::removeDirectory(const std::string& directoryToRemove) {
@@ -87,18 +88,18 @@ void Updater::renameTargetFile(const std::string& oldName, const std::string& ne
 }
 
 int Updater::runBinaryFileUpdate() {
-    std::string pathToBinaryFile = TEMP_DIRECTORY.string() + "/build/kard";
-    std::string pathToNewBinary = PATH_TO_SELF + ".new";
+    std::string pathToBinaryFile = allPaths.TEMP_PATH + "/build/kard";
+    std::string pathToNewBinary = allPaths.PATH_TO_SELF + ".new";
 
-    std::string commandToClone = getCommandToClone(TEMP_DIRECTORY.string());
-    std::string commandToConfigureMake = getCommandToConfigureMake(TEMP_DIRECTORY.string());
-    std::string commandToMake = getCommandToMake(TEMP_DIRECTORY.string());
+    std::string commandToClone = getCommandToClone(allPaths.TEMP_PATH);
+    std::string commandToConfigureMake = getCommandToConfigureMake(allPaths.TEMP_PATH);
+    std::string commandToMake = getCommandToMake(allPaths.TEMP_PATH);
     try {
         executeCommand(commandToClone);
         executeCommand(commandToConfigureMake);
         executeCommand(commandToMake);
         copyFile(pathToBinaryFile, pathToNewBinary);
-        renameTargetFile(pathToNewBinary, PATH_TO_SELF);
+        renameTargetFile(pathToNewBinary, allPaths.PATH_TO_SELF);
     } catch (const std::exception& e) {
         std::cerr << "update failed: " << e.what() << '\n';
         return 1;
@@ -107,7 +108,7 @@ int Updater::runBinaryFileUpdate() {
 }
 
 int Updater::runFullUpdate() {
-    std::string pathToProject = std::filesystem::path(PATH_TO_SELF).parent_path().parent_path().string();
+    std::string pathToProject = std::filesystem::path(allPaths.PATH_TO_SELF).parent_path().parent_path().string();
     std::string pathToNewProject = pathToProject + ".new";
 
     std::string commandToClone = getCommandToClone(pathToNewProject);
