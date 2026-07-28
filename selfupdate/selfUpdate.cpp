@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <unistd.h>
 #include <string>
+#include <vector>
+#include <optional>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -87,17 +89,30 @@ void Updater::renameTargetFile(const std::string& oldName, const std::string& ne
     }
 }
 
+void Updater::executeCommands(const std::vector<std::string>& commands) {
+    for (const auto& command : commands) {
+        executeCommand(command);
+    }
+}
+
+std::vector<std::string> Updater::makeCommands(const std::optional<std::string>& targetPath) {
+    std::vector<std::string> commands;
+    std::string targetDir = targetPath.value_or(allPaths.TEMP_PATH);
+
+    commands.push_back(getCommandToClone(targetDir));
+    commands.push_back(getCommandToConfigureMake(targetDir));
+    commands.push_back(getCommandToMake(targetDir));
+    return commands;
+}
+
 int Updater::runBinaryFileUpdate() {
     std::string pathToBinaryFile = allPaths.TEMP_PATH + "/build/kard";
     std::string pathToNewBinary = allPaths.PATH_TO_SELF + ".new";
 
-    std::string commandToClone = getCommandToClone(allPaths.TEMP_PATH);
-    std::string commandToConfigureMake = getCommandToConfigureMake(allPaths.TEMP_PATH);
-    std::string commandToMake = getCommandToMake(allPaths.TEMP_PATH);
+    std::vector<std::string> commands = makeCommands(std::nullopt);
+
     try {
-        executeCommand(commandToClone);
-        executeCommand(commandToConfigureMake);
-        executeCommand(commandToMake);
+        executeCommands(commands);
         copyFile(pathToBinaryFile, pathToNewBinary);
         renameTargetFile(pathToNewBinary, allPaths.PATH_TO_SELF);
     } catch (const std::exception& e) {
@@ -111,14 +126,10 @@ int Updater::runFullUpdate() {
     std::string pathToProject = std::filesystem::path(allPaths.PATH_TO_SELF).parent_path().parent_path().string();
     std::string pathToNewProject = pathToProject + ".new";
 
-    std::string commandToClone = getCommandToClone(pathToNewProject);
-    std::string commandToConfigureMake = getCommandToConfigureMake(pathToNewProject);
-    std::string commandToMake = getCommandToMake(pathToNewProject);
+    std::vector<std::string> commands = makeCommands(pathToNewProject);
 
     try {
-        executeCommand(commandToClone);
-        executeCommand(commandToConfigureMake);
-        executeCommand(commandToMake);
+        executeCommands(commands);
 
         renameTargetFile(pathToProject, pathToProject + ".old");
         renameTargetFile(pathToNewProject, pathToProject);

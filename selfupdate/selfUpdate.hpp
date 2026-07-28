@@ -2,6 +2,8 @@
 
 #include <filesystem>
 #include <string>
+#include <optional>
+#include <vector>
 
 struct UpdaterHelper {
     std::string HOME_PATH;
@@ -23,6 +25,14 @@ class Updater {
         std::string getCommandToClone(const std::string& pathToClone);
         std::string getCommandToConfigureMake(const std::string& pathToProject);
         std::string getCommandToMake(const std::string& pathToProject);
+
+        void removeDirectory(const std::string& directoryToRemove);
+        void executeCommand(const std::string& command);
+        void executeCommands(const std::vector<std::string>& commands);
+        void copyFile(const std::string& oldFile, const std::string& newFile);
+        void renameTargetFile(const std::string& newName, const std::string& oldName);
+
+        std::vector<std::string> makeCommands(const std::optional<std::string>& targetPath);
     public:
         Updater() {
             setTempDirectory();
@@ -34,12 +44,6 @@ class Updater {
         ~Updater() {
             removeDirectory(allPaths.TEMP_PATH);
         }
-
-        void removeDirectory(const std::string& directoryToRemove);
-
-        void executeCommand(const std::string& command);
-        void copyFile(const std::string& oldFile, const std::string& newFile);
-        void renameTargetFile(const std::string& newName, const std::string& oldName);
 
         int runBinaryFileUpdate();
         int runFullUpdate();
