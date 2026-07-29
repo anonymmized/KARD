@@ -66,14 +66,12 @@ void Updater::executeCommands(const std::vector<std::string>& commands) {
     }
 }
 
-// TODO: two childs are needed (Updater->BinUpdate and Updater->FullUpdate) to choose what path will be used
-
 int Updater::runBinaryFileUpdate() {
     std::string pathToBinaryFile = allPaths.TEMP_PATH + "/build/kard";
     std::string pathToNewBinary = allPaths.PATH_TO_SELF + ".new";
 
-    CommandBuilder commandBuilder(allPaths.TEMP_PATH, std::nullopt);
-    std::vector<std::string> commands = commandBuilder.makeCommands(allPaths.LOG_PATH_TO_UPDATE);
+    CommandBuilder commandBuilder(allPaths.TEMP_PATH, allPaths.LOG_PATH_TO_UPDATE);
+    std::vector<std::string> commands = commandBuilder.makeCommands();
 
     try {
         executeCommands(commands);
@@ -90,8 +88,8 @@ int Updater::runFullUpdate() {
     std::string pathToProject = std::filesystem::path(allPaths.PATH_TO_SELF).parent_path().parent_path().string();
     std::string pathToNewProject = pathToProject + ".new";
 
-    CommandBuilder commandBuilder(allPaths.TEMP_PATH, pathToNewProject);
-    std::vector<std::string> commands = commandBuilder.makeCommands(allPaths.LOG_PATH_TO_UPDATE);
+    CommandBuilder commandBuilder(pathToNewProject, allPaths.LOG_PATH_TO_UPDATE);
+    std::vector<std::string> commands = commandBuilder.makeCommands();
 
     try {
         executeCommands(commands);

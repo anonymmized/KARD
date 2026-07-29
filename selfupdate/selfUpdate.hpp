@@ -14,28 +14,18 @@ struct UpdaterHelper {
 
 class Updater {
     private:
-        const std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
         UpdaterHelper allPaths;
-        std::vector<std::string> commands;
 
         void loadAllPaths();
-        void makeAllCommands();
-
-        std::string getCommandToClone(const std::string& pathToClone);
-        std::string getCommandToConfigureMake(const std::string& pathToProject);
-        std::string getCommandToMake(const std::string& pathToProject);
 
         void removeDirectory(const std::string& directoryToRemove);
         void executeCommand(const std::string& command);
         void executeCommands(const std::vector<std::string>& commands);
         void copyFile(const std::string& oldFile, const std::string& newFile);
         void renameTargetFile(const std::string& newName, const std::string& oldName);
-
-        std::vector<std::string> makeCommands(const std::optional<std::string>& targetPath);
     public:
         Updater() {
             loadAllPaths();
-            makeAllCommands();
         }
 
         ~Updater() {
