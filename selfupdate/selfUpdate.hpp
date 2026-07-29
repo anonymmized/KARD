@@ -17,10 +17,7 @@ class Updater {
         constexpr std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
         UpdaterHelper allPaths;
 
-        void setTempDirectory();
-        void setPathToSelf();
-        void setHomePath();
-        void setLogPath();
+        void loadAllPaths();
 
         std::string getCommandToClone(const std::string& pathToClone);
         std::string getCommandToConfigureMake(const std::string& pathToProject);
@@ -35,10 +32,7 @@ class Updater {
         std::vector<std::string> makeCommands(const std::optional<std::string>& targetPath);
     public:
         Updater() {
-            setTempDirectory();
-            setPathToSelf();
-            setHomePath();
-            setLogPath();
+            loadAllPaths();
         }
 
         ~Updater() {

@@ -1,4 +1,5 @@
-#include "selfUpdate.hpp"
+#include "selfupdate/selfUpdate.hpp"
+#include "selfupdate/updatePaths.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -12,35 +13,12 @@
 #include <climits>
 #endif
 
-void Updater::setTempDirectory() {
-    try {
-        allPaths.TEMP_PATH = (std::filesystem::temp_directory_path() / ("kard-update" + std::to_string(getpid()))).string();
-    } catch (const std::exception& e) {
-        throw std::runtime_error(std::string("temp directory set error: ") + e.what());
-    }
-}
-
-void Updater::setPathToSelf() {
-#ifdef __APPLE__
-    char bufferForPath[PATH_MAX];
-    uint32_t bufferSize = sizeof(bufferForPath);
-    if (_NSGetExecutablePath(bufferForPath, &bufferSize) != 0) {
-        allPaths.PATH_TO_SELF = "";
-        return;
-    }
-    allPaths.PATH_TO_SELF = std::filesystem::canonical(bufferForPath).string();
-#else
-    allPaths.PATH_TO_SELF = std::filesystem::canonical("/proc/self/exe").string();
-#endif
-}
-
-void Updater::setHomePath() {
-    const char* homePath = std::getenv("HOME");
-    allPaths.HOME_PATH = homePath ? homePath : ".";
-}
-
-void Updater::setLogPath() {
-    allPaths.LOG_PATH_TO_UPDATE = allPaths.HOME_PATH + "/.kard/update.log";
+void Updater::loadAllPaths() {
+    PathsUpdater pathsUpdater;
+    allPaths.HOME_PATH = pathsUpdater.getHomePath();
+    allPaths.LOG_PATH_TO_UPDATE = pathsUpdater.getLogPathToUpdate();
+    allPaths.TEMP_PATH = pathsUpdater.getTempPath();
+    allPaths.PATH_TO_SELF = pathsUpdater.getPathToSelf();
 }
 
 std::string Updater::getCommandToClone(const std::string& pathToClone) {
