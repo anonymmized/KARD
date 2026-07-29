@@ -9,7 +9,7 @@ std::string CommandBuilder::getCommandToClone() {
 }
 
 std::string CommandBuilder::getCommandToConfigureMake() {
-    return "cmake -S " + projectPath + " -B " + logPath + "/build";
+    return "cmake -S " + projectPath + " -B " + projectPath + "/build";
 }
 
 std::string CommandBuilder::getCommandToMake() {

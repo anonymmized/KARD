@@ -1,5 +1,6 @@
 #include "selfupdate/selfUpdate.hpp"
 #include "selfupdate/updatePaths.hpp"
+#include "selfupdate/commandBuilder.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -19,11 +20,6 @@ void Updater::loadAllPaths() {
     allPaths.LOG_PATH_TO_UPDATE = pathsUpdater.getLogPathToUpdate();
     allPaths.TEMP_PATH = pathsUpdater.getTempPath();
     allPaths.PATH_TO_SELF = pathsUpdater.getPathToSelf();
-}
-
-void Updater::makeAllCommands() {
-    CommandBuilder commandBuilder();
-
 }
 
 void Updater::removeDirectory(const std::string& directoryToRemove) {

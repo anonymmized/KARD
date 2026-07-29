@@ -1,6 +1,15 @@
-#include "selfuopdater/updatePaths.hpp"
+#include "selfupdate/updatePaths.hpp"
 
 #include <string>
+#include <filesystem>
+#include <unistd.h>
+#include <stdexcept>
+#include <cstdint>
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <climits>
+#endif
 
 void PathsUpdater::setHomePath() {
     const char* homePath = std::getenv("HOME");
