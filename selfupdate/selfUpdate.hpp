@@ -14,10 +14,12 @@ struct UpdaterHelper {
 
 class Updater {
     private:
-        constexpr std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
+        const std::string REPO_URL = "https://github.com/anonymmized/KARD.git";
         UpdaterHelper allPaths;
+        std::vector<std::string> commands;
 
         void loadAllPaths();
+        void makeAllCommands();
 
         std::string getCommandToClone(const std::string& pathToClone);
         std::string getCommandToConfigureMake(const std::string& pathToProject);
@@ -33,6 +35,7 @@ class Updater {
     public:
         Updater() {
             loadAllPaths();
+            makeAllCommands();
         }
 
         ~Updater() {

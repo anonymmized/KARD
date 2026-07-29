@@ -21,16 +21,9 @@ void Updater::loadAllPaths() {
     allPaths.PATH_TO_SELF = pathsUpdater.getPathToSelf();
 }
 
-std::string Updater::getCommandToClone(const std::string& pathToClone) {
-    return "git clone --depth 1 " + REPO_URL + " " + pathToClone;
-}
+void Updater::makeAllCommands() {
+    CommandBuilder commandBuilder();
 
-std::string Updater::getCommandToConfigureMake(const std::string& pathToProject) {
-    return "cmake -S " + pathToProject + " -B " + pathToProject + "/build";
-}
-
-std::string Updater::getCommandToMake(const std::string& pathToProject) {
-    return "cmake --build " + pathToProject + "/build > " + allPaths.LOG_PATH_TO_UPDATE + " 2>&1";
 }
 
 void Updater::removeDirectory(const std::string& directoryToRemove) {
@@ -73,21 +66,14 @@ void Updater::executeCommands(const std::vector<std::string>& commands) {
     }
 }
 
-std::vector<std::string> Updater::makeCommands(const std::optional<std::string>& targetPath) {
-    std::vector<std::string> commands;
-    std::string targetDir = targetPath.value_or(allPaths.TEMP_PATH);
-
-    commands.push_back(getCommandToClone(targetDir));
-    commands.push_back(getCommandToConfigureMake(targetDir));
-    commands.push_back(getCommandToMake(targetDir));
-    return commands;
-}
+// TODO: two childs are needed (Updater->BinUpdate and Updater->FullUpdate) to choose what path will be used
 
 int Updater::runBinaryFileUpdate() {
     std::string pathToBinaryFile = allPaths.TEMP_PATH + "/build/kard";
     std::string pathToNewBinary = allPaths.PATH_TO_SELF + ".new";
 
-    std::vector<std::string> commands = makeCommands(std::nullopt);
+    CommandBuilder commandBuilder(allPaths.TEMP_PATH, std::nullopt);
+    std::vector<std::string> commands = commandBuilder.makeCommands(allPaths.LOG_PATH_TO_UPDATE);
 
     try {
         executeCommands(commands);
@@ -104,7 +90,8 @@ int Updater::runFullUpdate() {
     std::string pathToProject = std::filesystem::path(allPaths.PATH_TO_SELF).parent_path().parent_path().string();
     std::string pathToNewProject = pathToProject + ".new";
 
-    std::vector<std::string> commands = makeCommands(pathToNewProject);
+    CommandBuilder commandBuilder(allPaths.TEMP_PATH, pathToNewProject);
+    std::vector<std::string> commands = commandBuilder.makeCommands(allPaths.LOG_PATH_TO_UPDATE);
 
     try {
         executeCommands(commands);
