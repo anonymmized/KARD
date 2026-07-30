@@ -4,27 +4,45 @@
 #include <string>
 #include <filesystem>
 #include <optional>
+#include <iostream>
 
 #ifndef SNAPSHOT_BIN
-#define SNAPSHOT_BIN
+#define SNAPSHOT_BIN "kard-snapshot"
 #endif
 
 namespace {
     const std::string TIMER = "kard-snapshot.timer";
+    const std::string SERVICE = "kard-snapshot.service";
 
-    std::string unitDir(const std::string& home) {
+    std::string getUnitDir(const std::string& home) {
         return std::string(home) + "/.config/systemd/user";
     }
 
-    std::string svcPath(const std::string& home) {
-        return unitDir(home) + "/kard-snapshot.service";
+    std::string getSvcPath(const std::string& home) {
+        return getUnitDir(home) + "/" + SERVICE;
     }
 
-    std::string timerPath(const std::string& home) {
-        return unitDir(home) + "/" + TIMER;
+    std::string getTimerPath(const std::string& home) {
+        return getUnitDir(home) + "/" + TIMER;
     }
 
-    std::string serviceBody() {
+    bool reloadDaemon() {
+        return scheduler::detail::run("systemctl --user daemon-reload");
+    }
+
+    bool enableDaemon() {
+        return scheduler::detail::run("systemctl --user enable --now " + TIMER);
+    }
+
+    bool disableDaemon() {
+        return scheduler::detail::run("systemctl --user disable --now " + TIMER + " 2>/dev/null");
+    }
+
+    bool checkIfDaemonRunning() {
+        return scheduler::detail::run("systemctl --user is-active --quiet " + TIMER);
+    }
+
+    std::string getServiceBody() {
         return
             "[Unit]\n"
             "Description=KARD snapshot collector\n"
@@ -33,7 +51,7 @@ namespace {
             "ExecStart=" SNAPSHOT_BIN "\n";
     }
 
-    std::string timerBody() {
+    std::string getTimerBody() {
         return
             "[Unit]\n"
             "Description=KARD snapshot every 10 min\n"
@@ -52,15 +70,16 @@ bool installSnapshotJob() {
     }
 
     std::error_code errorCode;
-    std::filesystem::create_directories(unitDir(homePath), errorCode);
-
-    if (!scheduler::detail::writeFile(svcPath(homePath), serviceBody()) || !scheduler::detail::writeFile(timerPath(homePath), timerBody)) {
+    std::filesystem::create_directories(getUnitDir(*homePath), errorCode);
+    bool svcWriteResult = scheduler::detail::writeFile(getSvcPath(*homePath), getServiceBody());
+    bool timerWriteResult = scheduler::detail::writeFile(getTimerPath(*homePath), getTimerBody());
+    if (!svcWriteResult || !timerWriteResult) {
         std::cerr << "scheduler: failed to write systemd units\n";
         return false;
     }
 
-    run("systemctl --user daemon-reload");
-    return run("systemctl --user enable --now " + TIMER);
+    reloadDaemon();
+    return enableDaemon();
 }
 
 bool uninstallSnapshotJob() {
@@ -69,14 +88,14 @@ bool uninstallSnapshotJob() {
         return false;
     }
 
-    run("systemctl --user disable --now " + TIMER + " 2>/dev/null");
+    disableDaemon();
     std::error_code errorCode;
-    std::filesystem::remove(svcPath(homePath), errorCode);
-    std::filesystem::remove(timerPath(homePath), errorCode);
-    run("systemctl --user daemon-reload");
+    std::filesystem::remove(getSvcPath(*homePath), errorCode);
+    std::filesystem::remove(getTimerPath(*homePath), errorCode);
+    reloadDaemon();
     return true;
 }
 
 bool isSnapshotJobInstalled() {
-    return run("systemctl --user is-active --quiet " + TIMER);
+    return checkIfDaemonRunning();
 }
