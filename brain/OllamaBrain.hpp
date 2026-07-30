@@ -18,6 +18,7 @@ class OllamaBrain : public IBrain {
         nlohmann::json uploadConfig();
         nlohmann::json getBody();
         nlohmann::json collectAllMessages(const std::string& systemPrompt);
+        void pushToolContent(const std::string& content);
         int parsePeriod(const std::string& p);
     public:
         OllamaBrain() = default;
