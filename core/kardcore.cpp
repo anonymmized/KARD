@@ -124,8 +124,8 @@ int main(int argc, char** argv) {
     if (exitCode != RUN_CHAT) {
         return exitCode;
     }
-    std::vector<nlohmann::json> base;
-    OllamaBrain ollama(base);
+
+    OllamaBrain ollama;
     TerminalOutput terminalOutput;
     VoiceOutput voiceOutput;
     CompositeOutput compositeOutput(terminalOutput, voiceOutput);

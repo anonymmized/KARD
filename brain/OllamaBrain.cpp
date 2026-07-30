@@ -9,14 +9,16 @@
 #include <iostream>
 #include <chrono>
 
-void OllamaBrain::uploadConfig() {
+nlohmann::json OllamaBrain::uploadConfig() {
     std::ifstream in(CONFIG_PATH);
     if (!in.is_open()) {
         std::cerr << "Unable to open config file\n";
         return;
     }
-    in >> json_config;
+    nlohmann::json config;
+    in >> config;
     in.close();
+    return config;
 }
 
 int OllamaBrain::parsePeriod(const std::string& p) {
@@ -35,21 +37,33 @@ int OllamaBrain::parsePeriod(const std::string& p) {
     return num;
 }
 
-nlohmann::json OllamaBrain::getBody(const std::string& request) {
-    nlohmann::json messages = nlohmann::json::array();
-    uploadConfig();
-    url = json_config["url"];
-    messages.push_back({{"role","system"},{"content",json_config["system_prompt"]}});
-    for (const auto& m : base) messages.push_back(m);
-    json_config.push_back({"messages",messages});
-    return json_config;
+nlohmann::json OllamaBrain::collectAllMessages(const std::string& systemPrompt) {
+    nlohmann::json allMessages = nlohmann::json::array();
+    allMessages.push_back({{"role", "system"}, {"content", systemPrompt}});
+
+    for (const auto& part : base) {
+        allMessages.push_back(part);
+    }
+    return allMessages;
+}
+
+nlohmann::json OllamaBrain::getBody() {
+    nlohmann::json config = uploadConfig();
+    url = config["url"];
+    nlohmann::json allMessages = collectAllMessages(config["system_prompt"]);
+    config.push_back({"messages", allMessages});
+    return config;
+}
+
+void OllamaBrain::pushToolContent(const std::string& content) {
+    base.push_back({"role", "tool"}, {"content", content});
 }
 
 std::string OllamaBrain::ask(const std::string& request) {
     base.push_back({{"role","user"},{"content",request}});
-    int i = 5;
+    int remainingIterations = MAX_TOOL_ITERATIONS;
     std::string str_reply;
-    while (i != 0) {
+    while (remainingIterations != 0) {
         nlohmann::json body = getBody(request);
 
         cpr::Response resp = cpr::Post(
@@ -63,30 +77,30 @@ std::string OllamaBrain::ask(const std::string& request) {
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) return reply["message"]["content"].get<std::string>();
         for (const auto& call : reply["message"]["tool_calls"]) {
-            std::string tool_name = call["function"]["name"];
+            std::string tool_name = call["function"]["name"]; // TODO: do a map string-ToolHandler              ToolHandler contains function to run; prefix; add to snapshot or not
             if (tool_name == "get_cpu") {
-                std::string v = std::to_string(getCpuUsage());
-                appendSnapshot("get_cpu", v);
-                base.push_back({{"role","tool"},{"content", "cpu_usage_percent: " + v}});
+                std::string value = std::to_string(getCpuUsage());
+                appendSnapshot("get_cpu", vvalue);
+                pushToolContent("cpu_usage_percent: " + value);
             } else if (tool_name == "get_ram") {
-                std::string v = std::to_string(getRamUsage());
-                appendSnapshot("get_ram", v);
-                base.push_back({{"role","tool"},{"content", "ram_used_percent: " + v}});
+                std::string value = std::to_string(getRamUsage());
+                appendSnapshot("get_ram", value);
+                pushToolContent("ram_used_percent: " + value);
             } else if (tool_name == "get_disk") {
-                std::string v = getDiskSpace();
-                appendSnapshot("get_disk", v);
-                base.push_back({{"role","tool"},{"content", v}});
+                std::string value = getDiskSpace();
+                appendSnapshot("get_disk", value);
+                pushToolContent(value)
             } else if (tool_name == "get_uptime") {
-                std::string v = getUptime();
-                appendSnapshot("get_uptime", v);
-                base.push_back({{"role","tool"},{"content", "uptime: " + v}});
+                std::string value = getUptime();
+                appendSnapshot("get_uptime", value);
+                pushToolContent("uptime: " + value);
             } else if (tool_name == "get_all") {
-                std::string v = getAllMetrics();
-                base.push_back({{"role","tool"},{"content", v}});
+                std::string value = getAllMetrics();
+                pushToolContent(value);
             } else if (tool_name == "get_temp") {
                 std::string currentTempText = std::to_string(getTemp());
                 appendSnapshot("get_temp", currentTempText);
-                base.push_back({{"role","tool"},{"content", "temperature_celsius: " + currentTempText}});
+                pushToolContent("temperature_celsius: " + currentTempText);
             } else if (tool_name == "summarize_health") {
                 auto args = call["function"]["arguments"];
                 if (args.is_string()) {
@@ -94,30 +108,30 @@ std::string OllamaBrain::ask(const std::string& request) {
                 }
                 std::string period = args.value("period", "1h");
                 int hours = parsePeriod(period);
-                std::string v = summarizeHealth(hours);
-                base.push_back({{"role","tool"},{"content",v}});
+                std::string value = summarizeHealth(hours);
+                pushToolContent(value);
             } else if (tool_name == "get_network") {
                 double networkAnswerTime = getTcpProbe("1.1.1.1", 443);
                 if (networkAnswerTime >= 0) {
                     appendSnapshot("get_network", std::to_string(networkAnswerTime));
                 }
-                std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
-                base.push_back({{"role","tool"},{"content","rtt_ms: " + answerToPush}});
+                std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime); // TODO: change variable name
+                pushToolContent("rtt_ms: " + answerToPush);
             } else if (tool_name == "get_docker_status") {
-                base.push_back({{"role", "tool"},{"content", checkIfDockerIsRunning()}});
+                pushToolContent(checkIfDockerIsRunning()); // TODO: dont run docker function from another one
             } else if (tool_name == "get_docker_running") {
-                base.push_back({{"role", "tool"},{"content", getNumOfRunningContainers()}});
+                pushToolContent(getNumOfRunningContainers()); // TODO: create string vars for each function in 'if'
             } else if (tool_name == "get_docker_list") {
-                base.push_back({{"role", "tool"},{"content", getContainersList()}});
+                pushToolContent(getContainersList());
             }
             else {
-                base.push_back({{"role","tool"},{"content", "There is no tool like this."}});
+                pushToolContent(TOOL_NOT_EXIST);
             }
         }
         while (base.size() > 20) base.erase(base.begin());
         while (!base.empty() && base.front()["role"] != "user") base.erase(base.begin());
         str_reply = reply["message"]["content"].get<std::string>();
-        i--;
+        remainingIterations--;
     }
     return str_reply;
 }
