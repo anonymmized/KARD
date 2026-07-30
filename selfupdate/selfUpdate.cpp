@@ -1,13 +1,13 @@
 #include "selfupdate/selfUpdate.hpp"
 #include "selfupdate/updatePaths.hpp"
 #include "selfupdate/commandBuilder.hpp"
+#include "selfupdate/commandRunner.hpp"
 
 #include <iostream>
 #include <filesystem>
 #include <unistd.h>
 #include <string>
 #include <vector>
-#include <optional>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -69,8 +69,9 @@ int Updater::runBinaryFileUpdate() {
     CommandBuilder commandBuilder(allPaths.TEMP_PATH, allPaths.LOG_PATH_TO_UPDATE);
     std::vector<std::string> commands = commandBuilder.makeCommands();
 
+    CommandRunner commandRunner;
     try {
-        executeCommands(commands);
+        commandRunner.executeCommands(commands);
         copyFile(pathToBinaryFile, pathToNewBinary);
         renameTargetFile(pathToNewBinary, allPaths.PATH_TO_SELF);
     } catch (const std::exception& e) {
@@ -87,8 +88,9 @@ int Updater::runFullUpdate() {
     CommandBuilder commandBuilder(pathToNewProject, allPaths.LOG_PATH_TO_UPDATE);
     std::vector<std::string> commands = commandBuilder.makeCommands();
 
+    CommandRunner commandRunner;
     try {
-        executeCommands(commands);
+        commandRunner.executeCommands(commands);
 
         renameTargetFile(pathToProject, pathToProject + ".old");
         renameTargetFile(pathToNewProject, pathToProject);

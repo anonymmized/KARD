@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <optional>
 
 std::string CommandBuilder::getCommandToClone() {
     return "git clone --depth 1 " + REPO_URL + " " + projectPath;
