@@ -1,6 +1,8 @@
 #pragma once
 
 #include "selfupdate/updatePaths.hpp"
+#include "selfupdate/commandRunner.hpp"
+#include "selfupdate/fileOps.hpp"
 
 #include <filesystem>
 #include <string>
@@ -17,20 +19,17 @@ class Updater {
     private:
         UpdaterHelper allPaths;
         PathsUpdater pathsUpdater;
+        CommandRunner commandRunner;
+        FileOps fileOps;
         void loadAllPaths();
 
-        void removeDirectory(const std::string& directoryToRemove);
-        void executeCommand(const std::string& command);
-        void executeCommands(const std::vector<std::string>& commands);
-        void copyFile(const std::string& oldFile, const std::string& newFile);
-        void renameTargetFile(const std::string& oldName, const std::string& newName);
     public:
         Updater() {
             loadAllPaths();
         }
 
         ~Updater() {
-            removeDirectory(allPaths.TEMP_PATH);
+            fileOps.removeDirectory(allPaths.TEMP_PATH);
         }
 
         int runBinaryFileUpdate();
