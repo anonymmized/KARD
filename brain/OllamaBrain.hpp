@@ -9,7 +9,9 @@
 #include <atomic>
 
 constexpr int MAX_TOOL_ITERATIONS = 5;
-constexpr std::string TOOL_NOT_EXIST = "There is no tool like this.";
+constexpr const char* IP_TO_PING = "1.1.1.1";
+constexpr int HTTPS_PORT = 443;
+inline const std::string TOOL_NOT_EXIST = "There is no tool like this.";
 
 class OllamaBrain : public IBrain {
     private:
@@ -18,6 +20,7 @@ class OllamaBrain : public IBrain {
         nlohmann::json uploadConfig();
         nlohmann::json getBody();
         nlohmann::json collectAllMessages(const std::string& systemPrompt);
+        void pushAllContent(const std::string& toolName);
         void pushToolContent(const std::string& content);
         int parsePeriod(const std::string& p);
     public:
