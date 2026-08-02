@@ -43,22 +43,6 @@ nlohmann::json OllamaBrain::uploadConfig() {
     return config;
 }
 
-int OllamaBrain::parsePeriod(const std::string& p) {
-    if (p.empty()) return 3600;
-    int num;
-    try {
-        num = std::stoi(p);
-    } catch (const std::exception&) {
-        return 3600;
-    }
-    if (num <= 0) return 3600;
-    char unit = p.back();
-    if (unit == 'd') return num * 24 * 3600;
-    if (unit == 'm') return num * 60;
-    if (unit == 'h') return num * 3600;
-    return num;
-}
-
 nlohmann::json OllamaBrain::collectAllMessages(const std::string& systemPrompt) {
     nlohmann::json allMessages = nlohmann::json::array();
     allMessages.push_back({{"role", "system"}, {"content", systemPrompt}});
@@ -134,7 +118,7 @@ std::string OllamaBrain::ask(const std::string& request) {
                 if (networkAnswerTime >= 0) {
                     appendSnapshot("get_network", std::to_string(networkAnswerTime));
                 }
-                std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime); // TODO: change variable name
+                std::string answerToPush = (networkAnswerTime < 0) ? "network unreachable" : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
                 pushToolContent(answerToPush);
             } else {
                 pushAllContent(tool_name);
