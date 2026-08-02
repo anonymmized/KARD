@@ -3,8 +3,10 @@
 #include "body/monitoring/monitor.hpp"
 #include "body/snapshot_log.hpp"
 
+#include <functional>
+#include <unordered_map>
 #include <string>
-#include <nlohmann::json>
+#include <nlohmann/json.hpp>
 
 namespace {
     struct ToolHandler {
@@ -24,31 +26,10 @@ namespace {
         {"get_docker_running", {[]{ return getNumOfRunningContainers(); }, "", false}},
         {"get_docker_list", {[]{ return getContainersList(); }, "", false}}
     };
-}
 
-int parsePeriod(const std::string& period) {
-    if (period.empty()) {
-        return 3600;
-    }
-    int timeNumber;
-    try {
-        timeNumber = std::stoi(period);
-    } catch (const std::exception&) {
-        return 3600;
-    }
-    if (timeNumber <= 0) {
-        return 3600;
-    }
-    char unit = period.back();
-    if (unit == 'd') return timeNumber * 24 * 3600;
-    if (unit == 'm') return timeNumber * 60;
-    if (unit == 'h') return timeNumber * 3600;
-    return timeNumber;
-}
-
-std::string pushAllContent(const std::string& toolName) {
+    std::string pushAllContent(const std::string& toolName) {
     auto toolInMap = handlers.find(toolName);
-    if (toolName == handlers.end()) {
+    if (toolInMap == handlers.end()) {
         return TOOL_NOT_EXIST;
     }
 
@@ -57,6 +38,27 @@ std::string pushAllContent(const std::string& toolName) {
         appendSnapshot(toolName, result);
     }
     return toolInMap->second.prefix + result;
+}
+}
+
+int parsePeriod(const std::string& period) {
+    if (period.empty()) {
+        return SEC_IN_HOUR;
+    }
+    int timeNumber;
+    try {
+        timeNumber = std::stoi(period);
+    } catch (const std::exception&) {
+        return SEC_IN_HOUR;
+    }
+    if (timeNumber <= 0) {
+        return SEC_IN_HOUR;
+    }
+    char unit = period.back();
+    if (unit == 'd') return timeNumber * HOURS_IN_DAY * SEC_IN_HOUR;
+    if (unit == 'm') return timeNumber * SEC_IN_MIN;
+    if (unit == 'h') return timeNumber * SEC_IN_HOUR;
+    return timeNumber;
 }
 
 std::string runToolCall(const nlohmann::json& call) {
