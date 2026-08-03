@@ -3,9 +3,6 @@
 #include <cstdint>
 #include <string>
 
-inline constexpr int SEC_IN_DAY    = 86400;
-inline constexpr int SEC_IN_HOUR   = 3600;
-inline constexpr int SEC_IN_MINUTE = 60;
 inline constexpr int TIMEOUT_IN_MS = 1000;
 
 struct CpuTimes {
@@ -22,10 +19,3 @@ bool readCpuTimes(CpuTimes& times);
 bool readRamParts(RamParts& parts);
 std::string getUptime();
 double getTemp();
-double computeUsage(const CpuTimes& prev, const CpuTimes& curr);
-double getCpuUsage(int delayMs = 200);
-double getRamUsage();
-std::string getDiskSpace();
-std::string getAllMetrics();
-double getTcpProbe(const char* destIp, uint16_t destPort);
-std::string summarizeHealth(const int seconds);

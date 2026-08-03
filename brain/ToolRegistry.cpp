@@ -3,6 +3,8 @@
 #include "body/monitoring/monitor.hpp"
 #include "body/snapshot_log.hpp"
 
+#include "../common/timeConstants.hpp"
+
 #include <functional>
 #include <unordered_map>
 #include <string>
@@ -56,7 +58,7 @@ int parsePeriod(const std::string& period) {
     }
     char unit = period.back();
     if (unit == 'd') return timeNumber * HOURS_IN_DAY * SEC_IN_HOUR;
-    if (unit == 'm') return timeNumber * SEC_IN_MIN;
+    if (unit == 'm') return timeNumber * SEC_IN_MINUTE;
     if (unit == 'h') return timeNumber * SEC_IN_HOUR;
     return timeNumber;
 }

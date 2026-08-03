@@ -1,5 +1,7 @@
 #include "hostMetrics.hpp"
 
+#include "../../common/timeConstants.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <unordered_map>

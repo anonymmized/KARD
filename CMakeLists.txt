@@ -27,7 +27,7 @@ FetchContent_MakeAvailable(cpr)
 find_package(nlohmann_json REQUIRED)
 find_package(Threads REQUIRED)
 
-add_executable(kard brain/OllamaBrain.cpp core/argsParse.cpp core/kardcore.cpp
+add_executable(kard brain/OllamaBrain.cpp brain/ToolRegistry.cpp core/argsParse.cpp core/kardcore.cpp
                brain/IInput.cpp brain/IOutput.cpp body/scheduler/scheduler_help.cpp ${SCHEDULER_PLATFORM}
                body/snapshot_log.cpp body/paths.cpp selfupdate/selfUpdate.cpp selfupdate/commandBuilder.cpp
                selfupdate/updatePaths.cpp selfupdate/commandRunner.cpp selfupdate/fileOps.cpp ${HOST_METRICS}

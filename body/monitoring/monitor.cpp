@@ -1,4 +1,5 @@
 #include "hostMetrics.hpp"
+#include "monitor.hpp"
 #include "body/paths.hpp"
 
 #include <chrono>
@@ -18,7 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-double computeUsage(const CpuTimes& prev, const CpuTimes& curr) {
+double computeCpuUsage(const CpuTimes& prev, const CpuTimes& curr) {
     using ull = unsigned long long;
     ull prevIdle = prev.idle + prev.iowait;
     ull currIdle = curr.idle + curr.iowait;
@@ -57,13 +58,13 @@ double getCpuUsage(int delayMs) {
         if (!readCpuTimes(curr)) {
             return -1.0;
         }
-        return computeUsage(prev, curr);
+        return computeCpuUsage(prev, curr);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
     if (!readCpuTimes(curr)) {
         return -1.0;
     }
-    double usage = computeUsage(prev, curr);
+    double usage = computeCpuUsage(prev, curr);
     prev = curr;
     return usage;
 }

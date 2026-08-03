@@ -1,5 +1,7 @@
 #include "hostMetrics.hpp"
 
+#include "../../common/timeConstants.hpp"
+
 #include <mach/mach.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>

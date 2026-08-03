@@ -4,8 +4,8 @@
 
 #include <string>
 
-double computeUsage(const CpuTimes& prev, const CpuTimes& curr);
-double getCpuUsage(int delayMs);
+double computeCpuUsage(const CpuTimes& prev, const CpuTimes& curr);
+double getCpuUsage(int delayMs = 200);
 double getRamUsage();
 std::string getDiskSpace();
 std::string getAllMetrics();
