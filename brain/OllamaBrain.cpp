@@ -35,9 +35,9 @@ nlohmann::json OllamaBrain::collectAllMessages(const std::string& systemPrompt) 
 }
 
 nlohmann::json OllamaBrain::getBody() {
-    nlohmann::json allMessages = collectAllMessages(config["system_prompt"]);
-    config.push_back({"messages", allMessages});
-    return config;
+    nlohmann::json body = config;
+    body["messages"] = collectAllMessages(config["system_prompt"]);
+    return body;
 }
 
 void OllamaBrain::pushToolContent(const std::string& content) {
