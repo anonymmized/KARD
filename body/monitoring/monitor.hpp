@@ -10,4 +10,3 @@ double getRamUsage();
 std::string getDiskSpace();
 std::string getAllMetrics();
 double getTcpProbe(const char* destIp, uint16_t destPort);
-std::string summarizeHealth(const int seconds);

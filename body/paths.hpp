@@ -2,6 +2,6 @@
 
 #include <string>
 
-std::string pathToLogFile();
+std::string getPathToLogFile();
 
 bool createDirectory(const std::string& directoryToCreate);
