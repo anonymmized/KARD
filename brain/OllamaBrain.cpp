@@ -70,16 +70,10 @@ std::string OllamaBrain::ask(const std::string& request) {
         for (const auto& call : reply["message"]["tool_calls"]) {
             pushToolContent(runToolCall(call));
         }
+        removeUselessObjects(base);
 
-        while (base.size() > 20) {
-            base.erase(base.begin());
-        }
-
-        while (!base.empty() && base.front()["role"] != "user") {
-            base.erase(base.begin());
-        }
         stringReply = reply["message"]["content"].get<std::string>();
-        remainingIterations--;
+        remainingIterations -= 1;
     }
     return stringReply;
 }

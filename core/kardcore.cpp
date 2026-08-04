@@ -133,9 +133,9 @@ int main(int argc, char** argv) {
         ? static_cast<IOutput&>(compositeOutput)
         : static_cast<IOutput&>(terminalOutput);
     ReplComponents components(ollama, output);
-    ReplInterfaces io = bindInterfaces(components);
+    ReplInterfaces mainInterfaces = bindInterfaces(components);
     std::cout << "user: ";
-    KardCore core(io);
+    KardCore core(mainInterfaces);
     core.run();
     return 0;
 }

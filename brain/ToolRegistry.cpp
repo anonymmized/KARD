@@ -8,6 +8,7 @@
 #include <functional>
 #include <unordered_map>
 #include <string>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 namespace {
@@ -84,5 +85,15 @@ std::string runToolCall(const nlohmann::json& call) {
         answerToPush = pushAllContent(toolName);
     }
     return answerToPush;
+}
+
+void removeUselessObjects(std::vector<nlohmann::json>& base) {
+    while (base.size() > 20) {
+        base.erase(base.begin());
+    }
+
+    while (!base.empty() && base.front()["role"] != "user") {
+        base.erase(base.begin());
+    }
 }
 

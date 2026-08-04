@@ -4,6 +4,8 @@
 #include <atomic>
 #include <thread>
 
+constexpr int DELAY = 35;
+
 class IOutput {
     public:
         virtual ~IOutput() = default;
@@ -27,7 +29,7 @@ class CompositeOutput : public IOutput {
         IOutput& terminalOutputLink;
         IOutput& voiceOutputLink;
     public:
-        CompositeOutput(IOutput& first, IOutput& second) : terminalOutputLink(first), voiceOutputLink(second) {}
+        CompositeOutput(IOutput& terminalOut, IOutput& voiceOut) : terminalOutputLink(terminalOut), voiceOutputLink(voiceOut) {}
         void show(const std::string& text);
         void startThinking();
         void stopThinking();
