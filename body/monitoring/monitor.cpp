@@ -1,4 +1,5 @@
 #include "hostMetrics.hpp"
+#include "monitor.hpp"
 #include "body/paths.hpp"
 
 #include <chrono>
@@ -18,7 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-double computeUsage(const CpuTimes& prev, const CpuTimes& curr) {
+double computeCpuUsage(const CpuTimes& prev, const CpuTimes& curr) {
     using ull = unsigned long long;
     ull prevIdle = prev.idle + prev.iowait;
     ull currIdle = curr.idle + curr.iowait;
@@ -57,13 +58,13 @@ double getCpuUsage(int delayMs) {
         if (!readCpuTimes(curr)) {
             return -1.0;
         }
-        return computeUsage(prev, curr);
+        return computeCpuUsage(prev, curr);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
     if (!readCpuTimes(curr)) {
         return -1.0;
     }
-    double usage = computeUsage(prev, curr);
+    double usage = computeCpuUsage(prev, curr);
     prev = curr;
     return usage;
 }
@@ -91,7 +92,6 @@ std::string getDiskSpace() {
     return finalString;
 }
 
-// MAIN
 std::string getAllMetrics() {
     double cpuUsage = getCpuUsage();
     double ramUsage = getRamUsage();
@@ -103,6 +103,30 @@ std::string getAllMetrics() {
                             + ", disk_usage: " + diskUsage
                             + ", uptime: " + uptime;
     return finalString;
+}
+
+/*            getTcpProbe function and extensions part                                  */
+
+double calculateTripTime(int fileDescriptor, std::chrono::steady_clock::time_point tripStart) {
+    double finalTripTime = -1.0;
+
+    fd_set writeSet;
+    FD_ZERO(&writeSet);
+    FD_SET(fileDescriptor, &writeSet);
+    timeval timeout{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
+
+    int selectAnswer = select(fileDescriptor + 1, nullptr, &writeSet, nullptr, &timeout);
+    if (selectAnswer > 0) {
+        int error = 0;
+        socklen_t errorSize = sizeof(error);
+        getsockopt(fileDescriptor, SOL_SOCKET, SO_ERROR, &error, &errorSize);
+
+        if (error == 0) {
+            finalTripTime = std::chrono::duration<double, std::milli>(
+                    std::chrono::steady_clock::now() - tripStart).count();
+        }
+    }
+    return finalTripTime;
 }
 
 double getTcpProbe(const char* destIp, uint16_t destPort) {
@@ -118,76 +142,10 @@ double getTcpProbe(const char* destIp, uint16_t destPort) {
     workingAddress.sin_port = htons(destPort);
     inet_pton(AF_INET, destIp, &workingAddress.sin_addr);
 
-    double roundTripTime = -1.0;
     auto tripStart = std::chrono::steady_clock::now();
     int connectAnswer = connect(fileDescriptor, (sockaddr*)&workingAddress, sizeof(workingAddress));
-    if (connectAnswer < 0 && errno == EINPROGRESS) {
-        fd_set w;
-        FD_ZERO(&w);
-        FD_SET(fileDescriptor, &w);
-        timeval timeout{ TIMEOUT_IN_MS / 1000, (TIMEOUT_IN_MS % 1000) * 1000 };
-
-        int selectAnswer = select(fileDescriptor + 1, nullptr, &w, nullptr, &timeout);
-        if (selectAnswer > 0) {
-            int error = 0;
-            socklen_t socketLength = sizeof(error);
-            getsockopt(fileDescriptor, SOL_SOCKET, SO_ERROR, &error, &socketLength);
-            if (error == 0) {
-                roundTripTime = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tripStart).count();
-            }
-        }
-    }
+    double roundTripTime = calculateTripTime(fileDescriptor, tripStart);
     close(fileDescriptor);
     return roundTripTime;
 }
 
-std::string summarizeHealth(const int seconds) {
-    std::string logFilePath = pathToLogFile();
-    std::ifstream logFile(logFilePath);
-    if (!logFile.is_open()) {
-        return "unable to open log file for reading\n";
-    }
-    std::string line;
-    auto now = std::chrono::system_clock::now();
-    auto now_ts = std::chrono::system_clock::to_time_t(now);
-    std::unordered_map<std::string, std::vector<std::pair<long, double>>> series;
-    while (std::getline(logFile, line)) {
-        if (line.empty()) {
-            continue;
-        }
-        auto jsonParsed = nlohmann::json::parse(line, nullptr, false);
-        if (jsonParsed.is_discarded()) {
-            continue;
-        }
-        long ts = jsonParsed["ts"].get<long>();
-        if (now_ts - ts > seconds) {
-            continue;
-        }
-        static const std::set<std::string> numeric = {"get_cpu", "get_ram", "get_temp"};
-        std::string tool = jsonParsed["tool"].get<std::string>();
-        if (!numeric.count(tool)) {
-            continue;
-        }
-
-        try {
-            series[tool].push_back({ts, std::stod(jsonParsed["value"].get<std::string>())});
-        } catch (const std::exception&) {
-            continue;
-        }
-    }
-
-    std::string summary;
-    for (auto& [key, value] : series) {
-        std::sort(value.begin(), value.end(), [](const auto& a, const auto& b){ return a.first < b.first; });
-        double sum = 0.0, peak = value.front().second;
-        for (const auto& [ts, val] : value) {
-            sum += val;
-            peak = std::max(peak, val);
-        }
-
-        double avg = sum / value.size();
-        double growth = value.back().second - value.front().second;
-        summary += key + ": avg " + std::to_string(avg) + ", peak " + std::to_string(peak) + ", change " + std::to_string(growth) + " (" + std::to_string(value.size()) + " samples)\n";
-    }
-    return summary.empty() ? "no data for the last " + std::to_string(seconds / 3600) + "h. " : summary;
-}

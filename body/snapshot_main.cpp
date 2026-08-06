@@ -1,5 +1,5 @@
 #include "body/snapshot_log.hpp"
-#include "body/monitoring/hostMetrics.hpp"
+#include "body/monitoring/monitor.hpp"
 
 int main() {
     appendSnapshot("get_cpu", std::to_string(getCpuUsage()));

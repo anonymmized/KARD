@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdlib>
 
-std::string pathToLogFile() {
+std::string getPathToLogFile() {
     const char* homeDir = std::getenv("HOME");
     std::string kardDirectory = std::string(homeDir ? homeDir : ".") + "/.kard";
     createDirectory(kardDirectory);
