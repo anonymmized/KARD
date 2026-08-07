@@ -1,4 +1,5 @@
 #include "IOutput.hpp"
+#include "rawGuard.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -24,17 +25,25 @@ std::string TerminalOutput::doSpacesInText(const std::string &text) {
 
 void TerminalOutput::stopThinking() {
   thinking = false;
-  if (spinner.joinable())
+  if (spinner.joinable()) {
     spinner.join();
+  }
+  rawMode.reset();
 }
 
 void TerminalOutput::startThinking() {
+  cancelRequesting = false;
   thinking = true;
+  rawMode.emplace();
   spinner = std::thread([this] {
     const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
     int i = 0;
     while (thinking) {
       std::cout << '\r' << GREY + frames[i++ % 10] + ESC << std::flush;
+      char chr;
+      if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
+        cancelRequesting = true;
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
     }
     std::cout << "\r\033[K" << std::flush;

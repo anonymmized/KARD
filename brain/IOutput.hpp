@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rawGuard.hpp"
 #include <atomic>
 #include <string>
 #include <thread>
@@ -21,10 +22,14 @@ public:
 class TerminalOutput : public IOutput {
 private:
   std::atomic<bool> thinking{false};
+  std::atomic<bool> &cancelRequesting;
+  std::optional<RawMode> rawMode;
   std::thread spinner;
   std::string doSpacesInText(const std::string &text);
 
 public:
+  TerminalOutput(std::atomic<bool> &_cancelRequesting)
+      : cancelRequesting(_cancelRequesting) {}
   void show(const std::string &text) override;
   void startThinking() override;
   void stopThinking() override;
