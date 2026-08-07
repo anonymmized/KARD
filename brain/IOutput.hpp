@@ -15,6 +15,7 @@ public:
   virtual void show(const std::string &text) = 0;
   virtual void startThinking() {}
   virtual void stopThinking() {}
+  virtual void clearTerminal() {}
 };
 
 class TerminalOutput : public IOutput {
@@ -24,9 +25,10 @@ private:
   std::string doSpacesInText(const std::string &text);
 
 public:
-  void show(const std::string &text);
-  void startThinking();
-  void stopThinking();
+  void show(const std::string &text) override;
+  void startThinking() override;
+  void stopThinking() override;
+  void clearTerminal() override;
 };
 
 class CompositeOutput : public IOutput {
@@ -37,7 +39,8 @@ private:
 public:
   CompositeOutput(IOutput &terminalOut, IOutput &voiceOut)
       : terminalOutputLink(terminalOut), voiceOutputLink(voiceOut) {}
-  void show(const std::string &text);
-  void startThinking();
-  void stopThinking();
+  void show(const std::string &text) override;
+  void startThinking() override;
+  void stopThinking() override;
+  void clearTerminal() override;
 };

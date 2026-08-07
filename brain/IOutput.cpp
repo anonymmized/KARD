@@ -7,7 +7,7 @@
 
 void TerminalOutput::show(const std::string &text) {
   std::string spacedText = doSpacesInText(text);
-  std::cout << SPACING + "Assistant: " << text << '\n'
+  std::cout << SPACING + "Assistant: " << spacedText << '\n'
             << SPACING + "user: "; // issue №22
 }
 
@@ -54,4 +54,12 @@ void CompositeOutput::startThinking() {
 void CompositeOutput::stopThinking() {
   terminalOutputLink.stopThinking();
   voiceOutputLink.stopThinking();
+}
+
+void TerminalOutput::clearTerminal() {
+  std::cout << "\033[2J\033[H" << std::flush;
+}
+
+void CompositeOutput::clearTerminal() {
+  std::cout << "\033[2J\033[H" << std::flush;
 }
