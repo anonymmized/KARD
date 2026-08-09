@@ -1,36 +1,51 @@
 #pragma once
 
-#include <string>
+#include "rawGuard.hpp"
 #include <atomic>
+#include <string>
 #include <thread>
 
 constexpr int DELAY = 35;
+const std::string GREY = "\033[90m";
+const std::string ESC = "\033[0m";
+const std::string SPACING = "  ";
 
 class IOutput {
-    public:
-        virtual ~IOutput() = default;
-        virtual void show(const std::string& text) = 0;
-        virtual void startThinking() {}
-        virtual void stopThinking() {}
+public:
+  virtual ~IOutput() = default;
+  virtual void show(const std::string &text) = 0;
+  virtual void startThinking() {}
+  virtual void stopThinking() {}
+  virtual void clearTerminal() {}
 };
 
 class TerminalOutput : public IOutput {
-    private:
-        std::atomic<bool> thinking{false};
-        std::thread spinner;
-    public:
-        void show(const std::string& text);
-        void startThinking();
-        void stopThinking();
+private:
+  std::atomic<bool> thinking{false};
+  std::atomic<bool> &cancelRequesting;
+  std::optional<RawMode> rawMode;
+  std::thread spinner;
+  std::string doSpacesInText(const std::string &text);
+
+public:
+  TerminalOutput(std::atomic<bool> &_cancelRequesting)
+      : cancelRequesting(_cancelRequesting) {}
+  void show(const std::string &text) override;
+  void startThinking() override;
+  void stopThinking() override;
+  void clearTerminal() override;
 };
 
 class CompositeOutput : public IOutput {
-    private:
-        IOutput& terminalOutputLink;
-        IOutput& voiceOutputLink;
-    public:
-        CompositeOutput(IOutput& terminalOut, IOutput& voiceOut) : terminalOutputLink(terminalOut), voiceOutputLink(voiceOut) {}
-        void show(const std::string& text);
-        void startThinking();
-        void stopThinking();
+private:
+  IOutput &terminalOutputLink;
+  IOutput &voiceOutputLink;
+
+public:
+  CompositeOutput(IOutput &terminalOut, IOutput &voiceOut)
+      : terminalOutputLink(terminalOut), voiceOutputLink(voiceOut) {}
+  void show(const std::string &text) override;
+  void startThinking() override;
+  void stopThinking() override;
+  void clearTerminal() override;
 };
