@@ -17,7 +17,6 @@ public:
   virtual void show(const std::string &text) = 0;
   virtual void startThinking() {}
   virtual void stopThinking() {}
-  virtual void clearTerminal() {}
   virtual void showUserText(const std::string& text) {}
 };
 
@@ -36,7 +35,6 @@ public:
   void show(const std::string &text) override;
   void startThinking() override;
   void stopThinking() override;
-  void clearTerminal() override;
   void showUserText(const std::string& text) override;
 };
 
@@ -51,5 +49,4 @@ public:
   void show(const std::string &text) override;
   void startThinking() override;
   void stopThinking() override;
-  void clearTerminal() override;
 };

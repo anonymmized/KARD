@@ -27,9 +27,7 @@ void KardCore::run() {
     std::string ans = interfaces.brain.ask(userText);
     interfaces.output.stopThinking();
 
-    if (cancelRequesting) {
-      std::cout << "\n  user: ";
-    } else {
+    if (!cancelRequesting) {
       interfaces.output.show(ans);
     }
   }
@@ -140,7 +138,6 @@ int main(int argc, char **argv) {
   CompositeOutput compositeOutput(terminalOutput, voiceOutput); 
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)
                                : static_cast<IOutput &>(terminalOutput);
-  compositeOutput.clearTerminal(); 
   ReplInterfaces mainInterfaces{terminalInput, output, ollama};
   KardCore core(mainInterfaces, cancelRequesting);
   core.run();

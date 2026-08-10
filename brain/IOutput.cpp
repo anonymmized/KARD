@@ -79,11 +79,3 @@ void CompositeOutput::stopThinking() {
   terminalOutputLink.stopThinking();
   voiceOutputLink.stopThinking();
 }
-
-void TerminalOutput::clearTerminal() {
-  std::cout << "\033[2J\033[H" << std::flush;
-}
-
-void CompositeOutput::clearTerminal() {
-  std::cout << "\033[2J\033[H" << std::flush;
-}
