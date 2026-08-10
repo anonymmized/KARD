@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/terminal.hpp"
 #include <string>
 
 class IInput {
@@ -9,5 +10,9 @@ class IInput {
 };
 
 class TerminalInput : public IInput {
-    std::string read();
+    private:
+        TerminalSetup& setup;
+    public:
+        TerminalInput(TerminalSetup& _setup) : setup(_setup) {}
+        std::string read();
 };

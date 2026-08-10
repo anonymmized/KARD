@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/terminal.hpp"
 #include "rawGuard.hpp"
 #include <atomic>
 #include <string>
@@ -21,6 +22,7 @@ public:
 
 class TerminalOutput : public IOutput {
 private:
+  TerminalSetup& setup;
   std::atomic<bool> thinking{false};
   std::atomic<bool> &cancelRequesting;
   std::optional<RawMode> rawMode;
@@ -29,8 +31,8 @@ private:
   void typewriteText(const std::string& textToShow);
 
 public:
-  TerminalOutput(std::atomic<bool> &_cancelRequesting)
-      : cancelRequesting(_cancelRequesting) {}
+  TerminalOutput(std::atomic<bool> &_cancelRequesting, TerminalSetup& _setup)
+      : cancelRequesting(_cancelRequesting), setup(_setup) {}
   void show(const std::string &text) override;
   void startThinking() override;
   void stopThinking() override;

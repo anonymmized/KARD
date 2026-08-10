@@ -8,6 +8,7 @@
 #include "core/argsParse.hpp"
 #include "selfupdate/selfUpdate.hpp"
 #include "voice/voice.hpp"
+#include "core/terminal.hpp"
 
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -121,10 +122,6 @@ void testArgument() { std::cout << "This is a test for program\n"; }
 
 void printHelpPage() { std::cout << "This is a page for help\n"; }
 
-ReplInterfaces bindInterfaces(ReplComponents &components) {
-  return {components.terminalInput, components.output, components.brain};
-}
-
 int main(int argc, char **argv) {
   ArgumentParser parser(argc, argv);
   CliArguments args = parser.parseArguments();
@@ -134,15 +131,16 @@ int main(int argc, char **argv) {
   }
 
   std::atomic<bool> cancelRequesting{false};
-  OllamaBrain ollama(cancelRequesting);
-  TerminalOutput terminalOutput(cancelRequesting);
-  VoiceOutput voiceOutput;
-  CompositeOutput compositeOutput(terminalOutput, voiceOutput);
+  TerminalSetup setup;
+  TerminalInput terminalInput(setup);
+  OllamaBrain ollama(cancelRequesting); 
+  TerminalOutput terminalOutput(cancelRequesting, setup); 
+  VoiceOutput voiceOutput; 
+  CompositeOutput compositeOutput(terminalOutput, voiceOutput); 
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)
                                : static_cast<IOutput &>(terminalOutput);
-  compositeOutput.clearTerminal();
-  ReplComponents components(ollama, output);
-  ReplInterfaces mainInterfaces = bindInterfaces(components);
+  compositeOutput.clearTerminal(); 
+  ReplInterfaces mainInterfaces{terminalInput, output, ollama};
   std::cout << "  user: ";
   KardCore core(mainInterfaces, cancelRequesting);
   core.run();

@@ -8,22 +8,11 @@
 #include "voice/voice.hpp"
 #include <atomic>
 
-struct ReplComponents {
-  TerminalInput terminalInput;
-  IOutput &output;
-  IBrain &brain;
-
-  ReplComponents(IBrain &brainDependency, IOutput &out)
-      : output(out), brain(brainDependency) {}
-};
-
 struct ReplInterfaces {
   IInput &input;
   IOutput &output;
   IBrain &brain;
 };
-
-ReplInterfaces bindInterfaces(ReplComponents &components);
 
 class KardCore {
 private:
