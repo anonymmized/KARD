@@ -12,7 +12,6 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <vector>
 
 constexpr int RUN_CHAT = 2;
 
@@ -25,7 +24,12 @@ void KardCore::run() {
     interfaces.output.startThinking();
     std::string ans = interfaces.brain.ask(userText);
     interfaces.output.stopThinking();
-    interfaces.output.show(ans);
+
+    if (cancelRequesting) {
+      std::cout << "\n  user: ";
+    } else {
+      interfaces.output.show(ans);
+    }
   }
 }
 
@@ -129,8 +133,9 @@ int main(int argc, char **argv) {
     return exitCode;
   }
 
-  OllamaBrain ollama;
-  TerminalOutput terminalOutput;
+  std::atomic<bool> cancelRequesting{false};
+  OllamaBrain ollama(cancelRequesting);
+  TerminalOutput terminalOutput(cancelRequesting);
   VoiceOutput voiceOutput;
   CompositeOutput compositeOutput(terminalOutput, voiceOutput);
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)
@@ -139,7 +144,7 @@ int main(int argc, char **argv) {
   ReplComponents components(ollama, output);
   ReplInterfaces mainInterfaces = bindInterfaces(components);
   std::cout << "  user: ";
-  KardCore core(mainInterfaces);
+  KardCore core(mainInterfaces, cancelRequesting);
   core.run();
   return 0;
 }

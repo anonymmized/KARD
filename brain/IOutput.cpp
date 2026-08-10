@@ -8,12 +8,13 @@
 
 void TerminalOutput::show(const std::string &text) {
   std::string spacedText = doSpacesInText(text);
-  std::cout << SPACING + "Assistant: " << spacedText << '\n'
-            << SPACING + "user: "; // issue №22
+  std::cout << SPACING + "Assistant: " << std::flush;
+  typewriteText(spacedText);
+  std::cout << '\n' << SPACING + "user: " << std::flush; // issue №22
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string &text) {
-  std::string result = SPACING;
+  std::string result = "";
   for (char symbol : text) {
     result += symbol;
     if (symbol == '\n') {
@@ -21,6 +22,15 @@ std::string TerminalOutput::doSpacesInText(const std::string &text) {
     }
   }
   return result;
+}
+
+void TerminalOutput::typewriteText(const std::string& textToShow) {
+    std::cout << "\033[?25l";
+    for (char symbol : textToShow) {
+        std::cout << symbol << std::flush;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    std::cout << "\033[?25h";
 }
 
 void TerminalOutput::stopThinking() {

@@ -26,6 +26,7 @@ private:
   std::optional<RawMode> rawMode;
   std::thread spinner;
   std::string doSpacesInText(const std::string &text);
+  void typewriteText(const std::string& textToShow);
 
 public:
   TerminalOutput(std::atomic<bool> &_cancelRequesting)
