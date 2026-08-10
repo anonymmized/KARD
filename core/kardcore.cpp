@@ -22,6 +22,7 @@ void KardCore::run() {
     if (userText == "/exit") {
       return;
     }
+    interfaces.output.showUserText(userText);
     interfaces.output.startThinking();
     std::string ans = interfaces.brain.ask(userText);
     interfaces.output.stopThinking();
@@ -141,7 +142,6 @@ int main(int argc, char **argv) {
                                : static_cast<IOutput &>(terminalOutput);
   compositeOutput.clearTerminal(); 
   ReplInterfaces mainInterfaces{terminalInput, output, ollama};
-  std::cout << "  user: ";
   KardCore core(mainInterfaces, cancelRequesting);
   core.run();
   return 0;

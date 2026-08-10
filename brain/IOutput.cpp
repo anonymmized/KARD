@@ -7,10 +7,10 @@
 #include <thread>
 
 void TerminalOutput::show(const std::string &text) {
-  std::string spacedText = doSpacesInText(text);
-  std::cout << SPACING + "Assistant: " << std::flush;
-  typewriteText(spacedText);
-  std::cout << '\n' << SPACING + "user: " << std::flush; // issue №22
+    std::cout << "\033[?25l" << "\033[u";
+    std::string spacedText = doSpacesInText(text);
+    typewriteText(spacedText);
+    std::cout << '\n' << "\033[s" << "\033[?25h" << std::flush;
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string &text) {
@@ -25,12 +25,17 @@ std::string TerminalOutput::doSpacesInText(const std::string &text) {
 }
 
 void TerminalOutput::typewriteText(const std::string& textToShow) {
-    std::cout << "\033[?25l";
     for (char symbol : textToShow) {
         std::cout << symbol << std::flush;
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
-    std::cout << "\033[?25h";
+}
+
+void TerminalOutput::showUserText(const std::string& text) {
+    std::cout << "\033[?25l" << "\033[u";
+    std::string spacedText = doSpacesInText(text);
+    std::cout << SPACING << "user: " << spacedText << '\n';
+    std::cout << "\033[s" << "\033[?25h" << std::flush;
 }
 
 void TerminalOutput::stopThinking() {

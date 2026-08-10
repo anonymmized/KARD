@@ -18,6 +18,7 @@ public:
   virtual void startThinking() {}
   virtual void stopThinking() {}
   virtual void clearTerminal() {}
+  virtual void showUserText(const std::string& text) {}
 };
 
 class TerminalOutput : public IOutput {
@@ -29,7 +30,6 @@ private:
   std::thread spinner;
   std::string doSpacesInText(const std::string &text);
   void typewriteText(const std::string& textToShow);
-
 public:
   TerminalOutput(std::atomic<bool> &_cancelRequesting, TerminalSetup& _setup)
       : cancelRequesting(_cancelRequesting), setup(_setup) {}
@@ -37,6 +37,7 @@ public:
   void startThinking() override;
   void stopThinking() override;
   void clearTerminal() override;
+  void showUserText(const std::string& text) override;
 };
 
 class CompositeOutput : public IOutput {
