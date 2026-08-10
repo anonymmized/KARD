@@ -8,11 +8,11 @@
 #include "core/argsParse.hpp"
 #include "selfupdate/selfUpdate.hpp"
 #include "voice/voice.hpp"
+#include "core/terminal.hpp"
 
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <vector>
 
 constexpr int RUN_CHAT = 2;
 
@@ -22,10 +22,14 @@ void KardCore::run() {
     if (userText == "/exit") {
       return;
     }
+    interfaces.output.showUserText(userText);
     interfaces.output.startThinking();
     std::string ans = interfaces.brain.ask(userText);
     interfaces.output.stopThinking();
-    interfaces.output.show(ans);
+
+    if (!cancelRequesting) {
+      interfaces.output.show(ans);
+    }
   }
 }
 
@@ -117,10 +121,6 @@ void testArgument() { std::cout << "This is a test for program\n"; }
 
 void printHelpPage() { std::cout << "This is a page for help\n"; }
 
-ReplInterfaces bindInterfaces(ReplComponents &components) {
-  return {components.terminalInput, components.output, components.brain};
-}
-
 int main(int argc, char **argv) {
   ArgumentParser parser(argc, argv);
   CliArguments args = parser.parseArguments();
@@ -129,17 +129,17 @@ int main(int argc, char **argv) {
     return exitCode;
   }
 
-  OllamaBrain ollama;
-  TerminalOutput terminalOutput;
-  VoiceOutput voiceOutput;
-  CompositeOutput compositeOutput(terminalOutput, voiceOutput);
+  std::atomic<bool> cancelRequesting{false};
+  TerminalSetup setup;
+  TerminalInput terminalInput(setup);
+  OllamaBrain ollama(cancelRequesting); 
+  TerminalOutput terminalOutput(cancelRequesting, setup); 
+  VoiceOutput voiceOutput; 
+  CompositeOutput compositeOutput(terminalOutput, voiceOutput); 
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)
                                : static_cast<IOutput &>(terminalOutput);
-  compositeOutput.clearTerminal();
-  ReplComponents components(ollama, output);
-  ReplInterfaces mainInterfaces = bindInterfaces(components);
-  std::cout << "  user: ";
-  KardCore core(mainInterfaces);
+  ReplInterfaces mainInterfaces{terminalInput, output, ollama};
+  KardCore core(mainInterfaces, cancelRequesting);
   core.run();
   return 0;
 }
