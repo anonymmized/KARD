@@ -1,14 +1,16 @@
 #include "kardcore.hpp"
 #include "body/paths.hpp"
 #include "body/scheduler/scheduler.hpp"
-#include "brain/IBrain.hpp"
-#include "brain/IInput.hpp"
-#include "brain/IOutput.hpp"
+#include "contracts/IBrain.hpp"
+#include "contracts/IInput.hpp"
+#include "contracts/IOutput.hpp"
 #include "brain/OllamaBrain.hpp"
 #include "core/argsParse.hpp"
 #include "selfupdate/selfUpdate.hpp"
 #include "voice/voice.hpp"
-#include "core/terminal.hpp"
+#include "terminal/TerminalSetup.hpp"
+#include "terminal/TerminalInput.hpp"
+#include "terminal/TerminalOutput.hpp"
 
 #include <iostream>
 #include <nlohmann/json.hpp>

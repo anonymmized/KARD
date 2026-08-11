@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IBrain.hpp"
+#include "contracts/IBrain.hpp"
 
 #include <atomic>
 #include <cpr/cpr.h>

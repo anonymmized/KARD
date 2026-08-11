@@ -1,5 +1,4 @@
 #include "OllamaBrain.hpp"
-#include "IOutput.hpp"
 #include "brain/ToolRegistry.hpp"
 
 #include <cpr/cpr.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "brain/IOutput.hpp"
+#include "contracts/IOutput.hpp"
 #include <string>
 class VoiceOutput : public IOutput {
 private:

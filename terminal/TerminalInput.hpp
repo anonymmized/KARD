@@ -1,13 +1,8 @@
 #pragma once
 
-#include "core/terminal.hpp"
+#include "contracts/IInput.hpp"
+#include "terminal/TerminalSetup.hpp"
 #include <string>
-
-class IInput {
-    public:
-        virtual ~IInput() = default;
-        virtual std::string read() = 0;
-};
 
 class TerminalInput : public IInput {
     private:
