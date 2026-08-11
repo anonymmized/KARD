@@ -1,9 +1,9 @@
 #pragma once
 
 #include "argsParse.hpp"
-#include "brain/IBrain.hpp"
-#include "brain/IInput.hpp"
-#include "brain/IOutput.hpp"
+#include "contracts/IBrain.hpp"
+#include "contracts/IInput.hpp"
+#include "contracts/IOutput.hpp"
 #include "brain/OllamaBrain.hpp"
 #include "voice/voice.hpp"
 #include <atomic>

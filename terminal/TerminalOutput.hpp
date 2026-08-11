@@ -36,8 +36,8 @@ class CompositeOutput : public IOutput {
         IOutput& terminalOutputLink;
         IOutput& voiceOutputLink;
     public:
-        CompositeOutput(IOutput^ terminalOutput, IOutput& voiceOutput) 
-            : terminalOutputLink(TerminalOutput), voiceOutputLink(voiceOutput) {}
+        CompositeOutput(IOutput& terminalOutput, IOutput& voiceOutput) 
+            : terminalOutputLink(terminalOutput), voiceOutputLink(voiceOutput) {}
         void show(const std::string& text);
         void startThinking();
         void stopThinking();

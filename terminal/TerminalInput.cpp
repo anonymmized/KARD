@@ -31,7 +31,7 @@ std::string TerminalInput::read() {
     return line;
 }
 
-void TerminalInput redraw(const std::string& line) {
+void TerminalInput::redraw(const std::string& line) {
     int row = setup.getInputRow();
     int cols = setup.getCols();
     int visible = cols - 4;

@@ -1,4 +1,4 @@
-#include "terminal/terminaSetup.hpp"
+#include "terminal/TerminalSetup.hpp"
 
 #include <sys/ioctl.h>
 #include <iostream>
@@ -10,7 +10,7 @@ TerminalSetup::TerminalSetup() {
     std::cout << "\033[1;" << getOutputBottom() << "r";
     drawLine(termSize.rows - 2);
     drawLine(termSize.rows);
-    std::cout << "\033[1;1H" << std::flush;
+    std::cout << "\033[1;1H" << "\033[s" << std::flush;
 }
 
 TerminalSetup::~TerminalSetup() {

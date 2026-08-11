@@ -8,7 +8,7 @@ struct TermSize {
 class TerminalSetup {
     private:
         TermSize termSize;
-        const RESERVED_LINES = 3;
+        const int RESERVED_LINES = 3;
         void drawLine(int row);
     public:
         TerminalSetup();
