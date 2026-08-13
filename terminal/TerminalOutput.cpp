@@ -6,6 +6,9 @@
 #include <string>
 #include <thread>
 
+// TODO: 13.08 - do user's question and model's answer coloring
+// TODO: 13.08 - do metrics coloring
+
 void TerminalOutput::show(const std::string& text) {
     std::cout << "\033[?25l" << "\033[u";
     std::string spacedText = doSpacesInText(text);
@@ -60,9 +63,18 @@ void TerminalOutput::stopThinking() {
 
 void TerminalOutput::showUserText(const std::string& text) {
     std::cout << "\033[?25l" << "\033[u";
-    std::string spacedText = doSpacesInText(text);
-    std::cout << SPACING << "user: " << spacedText << '\n';
+    std::string newText = removeSpaces(text);
+    std::cout << GREY << "> " << ESC << GREY_BACKGROUND << newText << ESC << '\n';
     std::cout << "\033[s" << "\033[?25h" << std::flush;
+}
+
+std::string TerminalOutput::removeSpaces(const std::string& baseline) {
+    size_t firstNotSpace = baseline.find_first_not_of(' ');
+    if (firstNotSpace == std::string::npos) {
+        return "";
+    }
+    size_t lastNotSpace = baseline.find_last_not_of(' ');
+    return baseline.substr(firstNotSpace, lastNotSpace - firstNotSpace + 1);
 }
 
 void CompositeOutput::show(const std::string& text) {

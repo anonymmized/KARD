@@ -10,6 +10,7 @@
 
 constexpr int DELAY = 35;
 const std::string GREY    = "\033[90m";
+const std::string GREY_BACKGROUND = "\033[100m";
 const std::string ESC     = "\033[0m";
 const std::string SPACING = "  ";
 
@@ -22,6 +23,7 @@ class TerminalOutput : public IOutput {
         std::thread spinner;
         std::string doSpacesInText(const std::string& text);
         void typewriteText(const std::string& textToShow);
+        std::string removeSpaces(const std::string& baseline);
     public:
         TerminalOutput(std::atomic<bool> &_cancelRequesting, TerminalSetup& _setup)
             : cancelRequesting(_cancelRequesting), setup(_setup) {}
