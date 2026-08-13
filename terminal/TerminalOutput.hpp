@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <thread>
+#include <chrono>
 #include <string>
 
 constexpr int DELAY = 35;
@@ -17,6 +18,7 @@ const std::string SPACING = "  ";
 class TerminalOutput : public IOutput {
     private:
         TerminalSetup& setup;
+        std::chrono::steady_clock::time_point thinkingStart;
         std::atomic<bool> thinking{false};
         std::atomic<bool> &cancelRequesting;
         std::optional<RawMode> rawMode;

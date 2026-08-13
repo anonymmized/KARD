@@ -6,14 +6,12 @@
 #include <string>
 #include <thread>
 
-// TODO: 13.08 - do user's question and model's answer coloring
-// TODO: 13.08 - do metrics coloring
-
 void TerminalOutput::show(const std::string& text) {
     std::cout << "\033[?25l" << "\033[u";
+    std::cout << "\n➤ ";
     std::string spacedText = doSpacesInText(text);
     typewriteText(spacedText);
-    std::cout << '\n' << "\033[s" << "\033[?25h" << std::flush;
+    std::cout << "\n\n" << "\033[s" << "\033[?25h" << std::flush;
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string& text) {
@@ -64,7 +62,7 @@ void TerminalOutput::stopThinking() {
 void TerminalOutput::showUserText(const std::string& text) {
     std::cout << "\033[?25l" << "\033[u";
     std::string newText = removeSpaces(text);
-    std::cout << GREY << "> " << ESC << GREY_BACKGROUND << newText << ESC << '\n';
+    std::cout << GREY << "➤ " << ESC << GREY_BACKGROUND << newText << ESC << '\n';
     std::cout << "\033[s" << "\033[?25h" << std::flush;
 }
 
