@@ -7,10 +7,15 @@
 #include <thread>
 
 void TerminalOutput::show(const std::string& text) {
+    if (!setup.isInteractive()) {
+        std::cout << text << '\n' << std::flush;
+        return;
+    }
     std::cout << "\033[?25l" << "\033[u";
+    std::cout << "\n➤ ";
     std::string spacedText = doSpacesInText(text);
     typewriteText(spacedText);
-    std::cout << '\n' << "\033[s" << "\033[?25h" << std::flush;
+    std::cout << "\n\n" << "\033[s" << "\033[?25h" << std::flush;
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string& text) {
@@ -32,6 +37,9 @@ void TerminalOutput::typewriteText(const std::string& textToShow) {
 }
 
 void TerminalOutput::startThinking() {
+    if (!setup.isInteractive()) {
+        return;
+    }
     cancelRequesting = false;
     thinking = true;
     rawMode.emplace();
@@ -39,7 +47,7 @@ void TerminalOutput::startThinking() {
     const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
         int i = 0;
         while (thinking) {
-            std::cout << '\r' << GREY + frames[i++ % 10] + ESC << std::flush;
+            std::cout << '\r' << setup.getGrey() + frames[i++ % 10] + setup.getReset() << std::flush;
             char chr;
             if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
                 cancelRequesting = true;
@@ -59,10 +67,23 @@ void TerminalOutput::stopThinking() {
 }
 
 void TerminalOutput::showUserText(const std::string& text) {
+    std::string newText = removeSpaces(text);
+    if (!setup.isInteractive()) {
+        std::cout << "> " << newText << '\n' << std::flush;
+        return;
+    }
     std::cout << "\033[?25l" << "\033[u";
-    std::string spacedText = doSpacesInText(text);
-    std::cout << SPACING << "user: " << spacedText << '\n';
+    std::cout << setup.getGrey() << "➤ " << setup.getReset() << setup.getGreyBackground() << newText << setup.getReset() << '\n';
     std::cout << "\033[s" << "\033[?25h" << std::flush;
+}
+
+std::string TerminalOutput::removeSpaces(const std::string& baseline) {
+    size_t firstNotSpace = baseline.find_first_not_of(' ');
+    if (firstNotSpace == std::string::npos) {
+        return "";
+    }
+    size_t lastNotSpace = baseline.find_last_not_of(' ');
+    return baseline.substr(firstNotSpace, lastNotSpace - firstNotSpace + 1);
 }
 
 void CompositeOutput::show(const std::string& text) {
@@ -78,4 +99,9 @@ void CompositeOutput::startThinking() {
 void CompositeOutput::stopThinking() {
     terminalOutputLink.stopThinking();
     voiceOutputLink.stopThinking();
+}
+
+void CompositeOutput::showUserText(const std::string& text) {
+    terminalOutputLink.showUserText(text);
+    voiceOutputLink.showUserText(text);
 }

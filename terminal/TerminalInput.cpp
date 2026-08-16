@@ -4,6 +4,13 @@
 #include <iostream>
 
 std::string TerminalInput::read() {
+    if (!setup.isInteractive()) {
+        std::string line;
+        if (!std::getline(std::cin, line)) {
+            return "/exit";
+        }
+        return line;
+    }
     RawMode rawMode;
     std::string line;
     redraw(line);
@@ -35,6 +42,15 @@ void TerminalInput::redraw(const std::string& line) {
     int row = setup.getInputRow();
     int cols = setup.getCols();
     int visible = cols - 4;
-    std::string tail = (int)line.size() > visible ? line.substr(line.size() - visible) : line;
-    std::cout << "\033[" << row << ";1H\033[2K" << "> " << tail << std::flush;
+    if (visible < 1) {
+        visible = 1;
+    }
+    size_t start = 0;
+    if (line.size() > (size_t)visible) {
+        start = line.size() - (size_t)visible;
+        while (start < line.size() && ((unsigned char)line[start] & 0xC0) == 0x80) {
+            start += 1;
+        }
+    }
+    std::cout << "\033[" << row << ";1H\033[2K" << "> " << line.substr(start) << std::flush;
 }
