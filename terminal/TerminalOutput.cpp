@@ -7,6 +7,10 @@
 #include <thread>
 
 void TerminalOutput::show(const std::string& text) {
+    if (!setup.isInteractive()) {
+        std::cout << text << '\n' << std::flush;
+        return;
+    }
     std::cout << "\033[?25l" << "\033[u";
     std::cout << "\n➤ ";
     std::string spacedText = doSpacesInText(text);
@@ -33,6 +37,9 @@ void TerminalOutput::typewriteText(const std::string& textToShow) {
 }
 
 void TerminalOutput::startThinking() {
+    if (!setup.isInteractive()) {
+        return;
+    }
     cancelRequesting = false;
     thinking = true;
     rawMode.emplace();
@@ -40,7 +47,7 @@ void TerminalOutput::startThinking() {
     const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
         int i = 0;
         while (thinking) {
-            std::cout << '\r' << GREY + frames[i++ % 10] + ESC << std::flush;
+            std::cout << '\r' << setup.getGrey() + frames[i++ % 10] + setup.getReset() << std::flush;
             char chr;
             if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
                 cancelRequesting = true;
@@ -60,9 +67,13 @@ void TerminalOutput::stopThinking() {
 }
 
 void TerminalOutput::showUserText(const std::string& text) {
-    std::cout << "\033[?25l" << "\033[u";
     std::string newText = removeSpaces(text);
-    std::cout << GREY << "➤ " << ESC << GREY_BACKGROUND << newText << ESC << '\n';
+    if (!setup.isInteractive()) {
+        std::cout << "> " << newText << '\n' << std::flush;
+        return;
+    }
+    std::cout << "\033[?25l" << "\033[u";
+    std::cout << setup.getGrey() << "➤ " << setup.getReset() << setup.getGreyBackground() << newText << setup.getReset() << '\n';
     std::cout << "\033[s" << "\033[?25h" << std::flush;
 }
 

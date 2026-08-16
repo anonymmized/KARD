@@ -10,9 +10,6 @@
 #include <string>
 
 constexpr int DELAY = 35;
-const std::string GREY    = "\033[90m";
-const std::string GREY_BACKGROUND = "\033[100m";
-const std::string ESC     = "\033[0m";
 const std::string SPACING = "  ";
 
 class TerminalOutput : public IOutput {

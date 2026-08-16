@@ -4,6 +4,13 @@
 #include <iostream>
 
 std::string TerminalInput::read() {
+    if (!setup.isInteractive()) {
+        std::string line;
+        if (!std::getline(std::cin, line)) {
+            return "/exit";
+        }
+        return line;
+    }
     RawMode rawMode;
     std::string line;
     redraw(line);
