@@ -18,6 +18,8 @@ class TerminalSetup {
         std::string greyBackground;
     public:
         TerminalSetup();
+        TerminalSetup(const TerminalSetup&) = delete;
+        TerminalSetup& operator=(const TerminalSetup&) = delete;
         ~TerminalSetup();
         void setTerminalSize();
         int getOutputBottom() { return termSize.rows - RESERVED_LINES; }

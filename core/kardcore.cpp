@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
   TerminalSetup setup;
   TerminalInput terminalInput(setup);
   OllamaBrain ollama(cancelRequesting); 
-  TerminalOutput terminalOutput(cancelRequesting, setup); 
+  TerminalOutput terminalOutput(setup, cancelRequesting); 
   VoiceOutput voiceOutput; 
   CompositeOutput compositeOutput(terminalOutput, voiceOutput); 
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)

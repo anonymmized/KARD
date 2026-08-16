@@ -24,12 +24,12 @@ class TerminalOutput : public IOutput {
         void typewriteText(const std::string& textToShow);
         std::string removeSpaces(const std::string& baseline);
     public:
-        TerminalOutput(std::atomic<bool> &_cancelRequesting, TerminalSetup& _setup)
-            : cancelRequesting(_cancelRequesting), setup(_setup) {}
-        void show(const std::string& text);
-        void startThinking();
-        void stopThinking();
-        void showUserText(const std::string& text);
+        TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting)
+            : setup(_setup), cancelRequesting(_cancelRequesting) {}
+        void show(const std::string& text) override;
+        void startThinking() override;
+        void stopThinking() override;
+        void showUserText(const std::string& text) override;
 };
 
 class CompositeOutput : public IOutput {
@@ -39,8 +39,8 @@ class CompositeOutput : public IOutput {
     public:
         CompositeOutput(IOutput& terminalOutput, IOutput& voiceOutput) 
             : terminalOutputLink(terminalOutput), voiceOutputLink(voiceOutput) {}
-        void show(const std::string& text);
-        void startThinking();
-        void stopThinking();
-        void showUserText(const std::string& text);
+        void show(const std::string& text) override;
+        void startThinking() override;
+        void stopThinking() override;
+        void showUserText(const std::string& text) override;
 };
