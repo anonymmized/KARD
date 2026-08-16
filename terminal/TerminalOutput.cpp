@@ -89,3 +89,8 @@ void CompositeOutput::stopThinking() {
     terminalOutputLink.stopThinking();
     voiceOutputLink.stopThinking();
 }
+
+void CompositeOutput::showUserText(const std::string& text) {
+    terminalOutputLink.showUserText(text);
+    voiceOutputLink.showUserText(text);
+}

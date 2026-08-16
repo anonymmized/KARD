@@ -45,4 +45,5 @@ class CompositeOutput : public IOutput {
         void show(const std::string& text);
         void startThinking();
         void stopThinking();
+        void showUserText(const std::string& text);
 };

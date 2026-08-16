@@ -19,14 +19,14 @@ TerminalSetup::~TerminalSetup() {
 
 void TerminalSetup::drawLine(int row) {
     std::cout << "\033[" << row << ";1H";
-    for (int i = 0; i < termSize.cols; i++) {
+    for (int i = 0; i < termSize.cols - 1; i++) {
         std::cout << "─";
     }
 }
 
 void TerminalSetup::setTerminalSize() {
     winsize winsz{};
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsz) == 1) {
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsz) == -1) {
         return;
     }
     termSize.cols = winsz.ws_col;
