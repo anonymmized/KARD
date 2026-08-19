@@ -3,6 +3,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <vector>
+#include <thread>
+#include <chrono>
 #include "../terminal/RawMode.hpp"
 #include "text.hpp"
 
@@ -17,6 +19,23 @@ struct State {
     int outputHeight = 0;
 };
 
+std::string readEscapeSequence() {
+    std::string sequence;
+    for (int attempts = 0; attempts < 100; attempts++) {
+        char symbol;
+        if (read(STDIN_FILENO, &symbol, 1) != 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        sequence += symbol;
+        if (symbol == 'M' || symbol == 'm' | symbol == '~' || symbol >= 'A' && symbol <= 'Z') {
+            break;
+        }
+        if (sequence.size() >= 64) {
+            break;
+        }
+    }
+    return sequence;
+}
 
 int maxFirstVisible(const State& state) {
     int linesCount = static_cast<int>(state.wrappedLines.size());
@@ -97,6 +116,8 @@ int calculateOutputHeight(int termHeight) {
 
 int main() {
     RawMode rawMode;
+    std::cout << "\033[?1000h";
+    std::cout << "\033[?1006h";
     TermSize termSize = getTermSize();
 
     std::vector<std::string> wrapped = splitInput(TEXT_TO_INPUT, termSize.cols);
@@ -110,6 +131,7 @@ int main() {
     while (true) {
         char symbol;
         if (read(STDIN_FILENO, &symbol, 1) != 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
         if (symbol == 113) {
@@ -117,11 +139,31 @@ int main() {
         }
         if (symbol == 106) {
             scrollDown(state, 1);
+            render(state);
+            continue;
         }
         if (symbol == 107) {
             scrollUp(state, 1);
+            render(state);
+            continue;
         }
-        render(state);
+        if (symbol == 27) {
+            std::string sequence = readEscapeSequence();
+            if (sequence.rfind("[<64;", 0) == 0) {
+                scrollUp(state, 1);
+                render(state);
+                continue;
+            }
+
+            if (sequence.rfind("[<65;", 0) == 0) {
+                scrollDown(state, 3);
+                render(state);
+                continue;
+            }
+        }
     }
+    std::cout << "\033[?1000l";
+    std::cout << "\033[?1006l";
+    std::cout << std::flush;
     return 0;
 }
