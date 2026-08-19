@@ -2,12 +2,9 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <vector>
 #include "../terminal/RawMode.hpp"
 #include "text.hpp"
-
-int firstVisible = 0;
-int wrappedLinesCount = 0;
-int outputHeight = 0;
 
 struct TermSize {
     int cols = 80;
@@ -22,26 +19,41 @@ struct State {
 
 
 int maxFirstVisible(const State& state) {
-    return state.wrappedLines.size() - state.outputHeight;
+    int linesCount = static_cast<int>(state.wrappedLines.size());
+    if (linesCount <= state.outputHeight) {
+        return 0;
+    }
+    return linesCount - state.outputHeight;
 }
 
 void clampViewport(State& state) {
-
+    if (state.firstVisible < 0) {
+        state.firstVisible = 0;
+    }
+    int maxFirst = maxFirstVisible(state);
+    if (state.firstVisible > maxFirst) {
+        state.firstVisible = maxFirst;
+    }
 }
 
 void scrollUp(State& state, int lines) {
-
+    state.firstVisible -= lines;
+    clampViewport(state);
 }
 
-void scrollDown(State& state, int lines) {
-    
+void scrollDown(State& state, int lines) { 
+    state.firstVisible += lines;
+    clampViewport(state);
 }
 
 void render(const State& state) {
-    int visibleBegin = state.firstVisible;
-    int visibleEnd   = min(state.firstVisible + state.outputHeight, wrappedLines.size());
-    for (int i = visibleBegin; i < visibleEnd - 1; i++) {
-        std::cout << state.text[i];
+    for (int i = 0; i < state.outputHeight; i++) {
+        int lineIndex = state.firstVisible + i;
+        std::cout << "\033[" << i + 1 << ";1H";
+        std::cout << "\033[2K";
+        if (lineIndex < state.wrappedLines.size()) {
+            std::cout << state.wrappedLines[lineIndex] << std::flush;
+        }
     }
 }
 
@@ -71,7 +83,7 @@ std::vector<std::string> splitInput(const std::string& text, int width) {
         if (symbol == '\n' || symbol == '\r') {
             wrappedLines.push_back(line);
             line.clear();
-        }
+        } 
     }
     if (!line.empty()) {
         wrappedLines.push_back(line);
@@ -87,18 +99,29 @@ int main() {
     RawMode rawMode;
     TermSize termSize = getTermSize();
 
-    std::vector<std::string> wrapped = splitInput(TEXT_TO_INPUT, temrSize.cols);
-    State state.wrappedLines = wrapped;
+    std::vector<std::string> wrapped = splitInput(TEXT_TO_INPUT, termSize.cols);
+    State state;
+    state.wrappedLines = wrapped;
 
     int outputH = calculateOutputHeight(termSize.rows);
     state.outputHeight = outputH;
-    render;
+    render(state);
 
     while (true) {
-        get symbol from read();
-        if 'q' exit;
-        if 'j' scrollDown(3);
-        if 'k' scrollUp(3);
-        render;
+        char symbol;
+        if (read(STDIN_FILENO, &symbol, 1) != 1) {
+            continue;
+        }
+        if (symbol == 113) {
+            break;
+        }
+        if (symbol == 106) {
+            scrollDown(state, 1);
+        }
+        if (symbol == 107) {
+            scrollUp(state, 1);
+        }
+        render(state);
     }
+    return 0;
 }
