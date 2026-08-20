@@ -40,3 +40,10 @@ target_link_libraries(kard PRIVATE cpr::cpr nlohmann_json::nlohmann_json)
 add_executable(kard-snapshot body/snapshot_main.cpp body/snapshot_log.cpp ${HOST_METRICS} body/paths.cpp)
 target_include_directories(kard-snapshot PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(kard-snapshot PRIVATE nlohmann_json::nlohmann_json Threads::Threads)
+
+
+# sandbox
+add_executable(tui-playground sandbox/playground.cpp terminal/TerminalSetup.cpp terminal/TerminalInput.cpp terminal/TerminalOutput.cpp)
+target_include_directories(tui-playground PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(tui-playground PRIVATE Threads::Threads)
+
