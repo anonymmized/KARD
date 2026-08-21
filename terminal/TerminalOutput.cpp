@@ -11,11 +11,14 @@ void TerminalOutput::show(const std::string& text) {
         std::cout << text << '\n' << std::flush;
         return;
     }
+    render.appendText("KARD: " + text + "\n\n");
+    /*
     std::cout << "\033[?25l" << "\033[u";
     std::cout << "\n➤ ";
     std::string spacedText = doSpacesInText(text);
     typewriteText(spacedText);
     std::cout << "\n\n" << "\033[s" << "\033[?25h" << std::flush;
+    */
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string& text) {
@@ -72,9 +75,17 @@ void TerminalOutput::showUserText(const std::string& text) {
         std::cout << "> " << newText << '\n' << std::flush;
         return;
     }
+    render.appendText("> " + newText + "\n");
+    /*
+    std::string newText = removeSpaces(text);
+    if (!setup.isInteractive()) {
+        std::cout << "> " << newText << '\n' << std::flush;
+        return;
+    }
     std::cout << "\033[?25l" << "\033[u";
     std::cout << setup.getGrey() << "➤ " << setup.getReset() << setup.getGreyBackground() << newText << setup.getReset() << '\n';
     std::cout << "\033[s" << "\033[?25h" << std::flush;
+    */
 }
 
 std::string TerminalOutput::removeSpaces(const std::string& baseline) {

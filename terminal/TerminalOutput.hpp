@@ -3,6 +3,7 @@
 #include "contracts/IOutput.hpp"
 #include "terminal/TerminalSetup.hpp"
 #include "terminal/RawMode.hpp"
+#include "terminal/render/Render.hpp"
 
 #include <atomic>
 #include <thread>
@@ -15,6 +16,7 @@ const std::string SPACING = "  ";
 class TerminalOutput : public IOutput {
     private:
         TerminalSetup& setup;
+        Render render;
         std::chrono::steady_clock::time_point thinkingStart;
         std::atomic<bool> thinking{false};
         std::atomic<bool> &cancelRequesting;

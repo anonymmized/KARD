@@ -1,9 +1,7 @@
 #pragma once
 
-struct TermSize {
-    int cols = 80;
-    int rows = 24;
-};
+#include <string>
+#include <vector>
 
 struct State {
     std::vector<std::string> wrappedLines;
@@ -16,19 +14,27 @@ const int LINES_TO_SCROLL = 1;
 
 class Render {
     private:
+        
+        struct TermSize {
+            int cols = 80;
+            int rows = 24;
+        };
+
         State state;
+        std::string allText;
         TermSize termSize;
         TermSize getTermSize();
         std::vector<std::string> wrapText(const std::string& targetText, int width);
         int calculateOutputHeight(int termHeight);
+        void clampViewport();
+        void scrollToBottom();
+        int maxFirstVisible();
+        void render();
     public:
-        Render(const std::string& _outputText) {
+        Render() {
             termSize = getTermSize();
-            state.wrappedLines = wrapText(_outputText, termSize.cols);
             state.outputHeight = calculateOutputHeight(termSize.rows);
         }
-        void render();
-        void scrollDown();
-        void scrollUp();
+        void appendText(const std::string& textToAppend);
 
 };
