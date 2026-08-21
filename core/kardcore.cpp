@@ -11,6 +11,7 @@
 #include "terminal/TerminalSetup.hpp"
 #include "terminal/TerminalInput.hpp"
 #include "terminal/TerminalOutput.hpp"
+#include "terminal/render/Render.hpp"
 
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -133,9 +134,10 @@ int main(int argc, char **argv) {
 
   std::atomic<bool> cancelRequesting{false};
   TerminalSetup setup;
-  TerminalInput terminalInput(setup);
+  Render render;
+  TerminalInput terminalInput(setup, render);
   OllamaBrain ollama(cancelRequesting); 
-  TerminalOutput terminalOutput(setup, cancelRequesting); 
+  TerminalOutput terminalOutput(setup, cancelRequesting, render); 
   VoiceOutput voiceOutput; 
   CompositeOutput compositeOutput(terminalOutput, voiceOutput); 
   IOutput &output = args.voice ? static_cast<IOutput &>(compositeOutput)

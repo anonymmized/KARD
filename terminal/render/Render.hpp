@@ -14,7 +14,6 @@ const int LINES_TO_SCROLL = 1;
 
 class Render {
     private:
-        
         struct TermSize {
             int cols = 80;
             int rows = 24;
@@ -30,11 +29,13 @@ class Render {
         void scrollToBottom();
         int maxFirstVisible();
         void render();
+        int utf8CharLength(unsigned char lead);
     public:
         Render() {
             termSize = getTermSize();
             state.outputHeight = calculateOutputHeight(termSize.rows);
         }
         void appendText(const std::string& textToAppend);
-
+        void scrollUp(int lines);
+        void scrollDown(int lines);
 };

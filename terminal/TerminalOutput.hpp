@@ -26,8 +26,8 @@ class TerminalOutput : public IOutput {
         void typewriteText(const std::string& textToShow);
         std::string removeSpaces(const std::string& baseline);
     public:
-        TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting)
-            : setup(_setup), cancelRequesting(_cancelRequesting) {}
+        TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)
+            : setup(_setup), cancelRequesting(_cancelRequesting), render(_render) {}
         void show(const std::string& text) override;
         void startThinking() override;
         void stopThinking() override;

@@ -23,6 +23,19 @@ std::string TerminalInput::read() {
         if (symbol == '\n' || symbol == '\r') {
             break;
         }
+        if (symbol == 27) {
+            std::string sequence = readEscapeSequence();
+            if (sequence == "[A") {
+                render.scrollUp(1);
+                redraw(line);
+                continue;
+            }
+            if (sequence == "[B") {
+                render.scrollDown(1);
+                redraw(line);
+                continue;
+            }
+        }
         if (symbol == 127 || symbol == 8) {
             if (!line.empty()) {
                 while (line.size() > 1 && ((unsigned char)line.back() & 0xC0) == 0x80) {
@@ -36,6 +49,25 @@ std::string TerminalInput::read() {
         redraw(line);
     }
     return line;
+}
+
+std::string TerminalInput::readEscapeSequence() {
+    std::string seq;
+
+    for (int i = 0; i < 8; ++i) {
+        char ch;
+        if (::read(STDIN_FILENO, &ch, 1) != 1) {
+            break;
+        }
+
+        seq += ch;
+
+        if ((ch >= 'A' && ch <= 'Z') || ch == '~') {
+            break;
+        }
+    }
+
+    return seq;
 }
 
 void TerminalInput::redraw(const std::string& line) {

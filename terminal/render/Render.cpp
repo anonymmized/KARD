@@ -18,7 +18,7 @@ Render::TermSize Render::getTermSize() {
     return termSize;
 }
 
-int utf8CharLength(unsigned char lead) {
+int Render::utf8CharLength(unsigned char lead) {
     if ((lead & 0x80) == 0x00) return 1;
     if ((lead & 0xE0) == 0xC0) return 2;
     if ((lead & 0xF0) == 0xE0) return 3;
@@ -106,5 +106,17 @@ void Render::appendText(const std::string& textToAppend) {
     state.wrappedLines = wrapText(allText, termSize.cols);
     state.outputHeight = calculateOutputHeight(termSize.rows);
     scrollToBottom();
+    render();
+}
+
+void Render::scrollUp(int lines) {
+    state.firstVisible -= lines;
+    clampViewport();
+    render();
+}
+
+void Render::scrollDown(int lines) {
+    state.firstVisible += lines;
+    clampViewport();
     render();
 }
