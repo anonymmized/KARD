@@ -23,7 +23,6 @@ class TerminalOutput : public IOutput {
         std::optional<RawMode> rawMode;
         std::thread spinner;
         std::string doSpacesInText(const std::string& text);
-        void typewriteText(const std::string& textToShow);
         std::string removeSpaces(const std::string& baseline);
     public:
         TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)

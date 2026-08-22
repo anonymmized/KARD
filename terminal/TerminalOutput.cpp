@@ -12,13 +12,6 @@ void TerminalOutput::show(const std::string& text) {
         return;
     }
     render.appendText("KARD: " + text + "\n\n");
-    /*
-    std::cout << "\033[?25l" << "\033[u";
-    std::cout << "\n➤ ";
-    std::string spacedText = doSpacesInText(text);
-    typewriteText(spacedText);
-    std::cout << "\n\n" << "\033[s" << "\033[?25h" << std::flush;
-    */
 }
 
 std::string TerminalOutput::doSpacesInText(const std::string& text) {
@@ -30,13 +23,6 @@ std::string TerminalOutput::doSpacesInText(const std::string& text) {
         }
     }
     return result;
-}
-
-void TerminalOutput::typewriteText(const std::string& textToShow) {
-    for (char symbol : textToShow) {
-        std::cout << symbol << std::flush;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    }
 }
 
 void TerminalOutput::startThinking() {
@@ -71,21 +57,12 @@ void TerminalOutput::stopThinking() {
 
 void TerminalOutput::showUserText(const std::string& text) {
     std::string newText = removeSpaces(text);
+    std::cout << "\033[" << setup.getInputRow() << ";1H\033[2K";
     if (!setup.isInteractive()) {
         std::cout << "> " << newText << '\n' << std::flush;
         return;
     }
-    render.appendText("> " + newText + "\n");
-    /*
-    std::string newText = removeSpaces(text);
-    if (!setup.isInteractive()) {
-        std::cout << "> " << newText << '\n' << std::flush;
-        return;
-    }
-    std::cout << "\033[?25l" << "\033[u";
-    std::cout << setup.getGrey() << "➤ " << setup.getReset() << setup.getGreyBackground() << newText << setup.getReset() << '\n';
-    std::cout << "\033[s" << "\033[?25h" << std::flush;
-    */
+    render.appendText(setup.getGrey() + "> " + newText + "\n" + setup.getReset());
 }
 
 std::string TerminalOutput::removeSpaces(const std::string& baseline) {

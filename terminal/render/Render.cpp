@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <cstdio>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 Render::TermSize Render::getTermSize() {
     Render::TermSize termSize;
@@ -96,8 +98,15 @@ void Render::render() {
         std::cout << "\033[" << i + 1 << ";1H";
         std::cout << "\033[2K";
         if (lineIndex < state.wrappedLines.size()) {
-            std::cout << state.wrappedLines[lineIndex] << std::flush;
+            typewriteText(state.wrappedLines[lineIndex]);
         }
+    }
+}
+
+void Render::typewriteText(const std::string& textToWrite) {
+    for (char symbol : textToWrite) {
+        std::cout << symbol << std::flush;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }
 

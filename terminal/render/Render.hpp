@@ -30,6 +30,7 @@ class Render {
         int maxFirstVisible();
         void render();
         int utf8CharLength(unsigned char lead);
+        void typewriteText(const std::string& textToWrite);
     public:
         Render() {
             termSize = getTermSize();
