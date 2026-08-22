@@ -10,7 +10,9 @@ class TerminalInput : public IInput {
         TerminalSetup& setup;
         Render& render;
         void redraw(const std::string& line);
-        std::string readEscapeSequence();
+        std::string readEscapeSequenceForMouse();
+        void enableMouseDetection();
+        void disableMouseDetection();
     public:
         TerminalInput(TerminalSetup& _setup, Render& _render) : setup(_setup), render(_render) {}
         std::string read();

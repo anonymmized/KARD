@@ -92,13 +92,21 @@ void Render::scrollToBottom() {
     state.firstVisible = maxFirstVisible();
 }
 
-void Render::render() {
+void Render::render(RenderStates renderState) {
     for (int i = 0; i < state.outputHeight; i++) {
         int lineIndex = state.firstVisible + i;
         std::cout << "\033[" << i + 1 << ";1H";
         std::cout << "\033[2K";
         if (lineIndex < state.wrappedLines.size()) {
-            typewriteText(state.wrappedLines[lineIndex]);
+            if (renderState == RenderStates::Rewrite) {
+                if (lineIndex >= oldWrappedCount) {
+                    typewriteText(state.wrappedLines[lineIndex]);
+                } else {
+                    std::cout << state.wrappedLines[lineIndex] << std::flush;
+                }
+            } else if (renderState == RenderStates::Scroll) {
+                std::cout << state.wrappedLines[lineIndex]<< std::flush;
+            }
         }
     }
 }
@@ -112,20 +120,21 @@ void Render::typewriteText(const std::string& textToWrite) {
 
 void Render::appendText(const std::string& textToAppend) {
     allText += textToAppend;
+    oldWrappedCount = state.wrappedLines.size();
     state.wrappedLines = wrapText(allText, termSize.cols);
     state.outputHeight = calculateOutputHeight(termSize.rows);
     scrollToBottom();
-    render();
+    render(RenderStates::Rewrite);
 }
 
 void Render::scrollUp(int lines) {
     state.firstVisible -= lines;
     clampViewport();
-    render();
+    render(RenderStates::Scroll);
 }
 
 void Render::scrollDown(int lines) {
     state.firstVisible += lines;
     clampViewport();
-    render();
+    render(RenderStates::Scroll);
 }

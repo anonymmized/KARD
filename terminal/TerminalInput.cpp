@@ -2,6 +2,8 @@
 #include "terminal/RawMode.hpp"
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 std::string TerminalInput::read() {
     if (!setup.isInteractive()) {
@@ -24,13 +26,13 @@ std::string TerminalInput::read() {
             break;
         }
         if (symbol == 27) {
-            std::string sequence = readEscapeSequence();
-            if (sequence == "[A") {
+            std::string sequence = readEscapeSequenceForMouse();
+            if (sequence.rfind("[<64;", 0) == 0) {
                 render.scrollUp(1);
                 redraw(line);
                 continue;
             }
-            if (sequence == "[B") {
+            if (sequence.rfind("[<65;", 0) == 0) {
                 render.scrollDown(1);
                 redraw(line);
                 continue;
@@ -51,23 +53,34 @@ std::string TerminalInput::read() {
     return line;
 }
 
-std::string TerminalInput::readEscapeSequence() {
-    std::string seq;
+void TerminalInput::enableMouseDetection() {
+    std::cout << "\033[?1000h";
+    std::cout << "\033[?1006h";
+}
 
-    for (int i = 0; i < 8; ++i) {
-        char ch;
-        if (::read(STDIN_FILENO, &ch, 1) != 1) {
+void TerminalInput::disableMouseDetection() {
+    std::cout << "\033[?1000l";
+    std::cout << "\033[?1006l";
+    std::cout << std::flush;
+}
+
+std::string TerminalInput::readEscapeSequenceForMouse() {
+    std::string sequence;
+
+    for (int i = 0; i < 100; ++i) {
+        char symbol;
+        if (::read(STDIN_FILENO, &symbol, 1) != 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        sequence += symbol;
+        if (symbol == 'M' || symbol == 'm' || symbol == '~' || symbol >= 'A' && symbol <= 'Z') {
             break;
         }
-
-        seq += ch;
-
-        if ((ch >= 'A' && ch <= 'Z') || ch == '~') {
+        if (sequence.size() >= 64) {
             break;
         }
     }
-
-    return seq;
+    return sequence;
 }
 
 void TerminalInput::redraw(const std::string& line) {

@@ -9,6 +9,11 @@ struct State {
     int outputHeight = 0;
 };
 
+enum class RenderStates {
+    Scroll,
+    Rewrite
+};
+
 const int NUM_OF_RESERVED_LINES = 3;
 const int LINES_TO_SCROLL = 1;
 
@@ -18,7 +23,7 @@ class Render {
             int cols = 80;
             int rows = 24;
         };
-
+        int oldWrappedCount;
         State state;
         std::string allText;
         TermSize termSize;
@@ -28,7 +33,7 @@ class Render {
         void clampViewport();
         void scrollToBottom();
         int maxFirstVisible();
-        void render();
+        void render(RenderStates renderState);
         int utf8CharLength(unsigned char lead);
         void typewriteText(const std::string& textToWrite);
     public:
