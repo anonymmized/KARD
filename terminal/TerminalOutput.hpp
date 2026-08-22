@@ -16,7 +16,7 @@ const std::string SPACING = "  ";
 class TerminalOutput : public IOutput {
     private:
         TerminalSetup& setup;
-        Render render;
+        Render& render;
         std::chrono::steady_clock::time_point thinkingStart;
         std::atomic<bool> thinking{false};
         std::atomic<bool> &cancelRequesting;
