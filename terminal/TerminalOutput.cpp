@@ -25,6 +25,18 @@ std::string TerminalOutput::doSpacesInText(const std::string& text) {
     return result;
 }
 
+void TerminalOutput::printSpinner(const std::string& elementToPrint) {
+    std::cout << '\r' << setup.getGrey() + elementToPrint + setup.getReset() << std::flush;
+}
+
+bool TerminalOutput::detectEscapeToStop() {
+    char chr;
+    if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
+        return true;
+    }
+    return false;
+}
+
 void TerminalOutput::startThinking() {
     if (!setup.isInteractive()) {
         return;
@@ -36,11 +48,8 @@ void TerminalOutput::startThinking() {
     const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
         int i = 0;
         while (thinking) {
-            std::cout << '\r' << setup.getGrey() + frames[i++ % 10] + setup.getReset() << std::flush;
-            char chr;
-            if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
-                cancelRequesting = true;
-            }
+            printSpinner(frames[i++ % 10]);
+            cancelRequesting = detectEscapeToStop();
             std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
         }
         std::cout << "\r\033[K" << std::flush;

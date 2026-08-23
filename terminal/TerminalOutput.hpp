@@ -22,6 +22,8 @@ class TerminalOutput : public IOutput {
         std::atomic<bool> &cancelRequesting;
         std::optional<RawMode> rawMode;
         std::thread spinner;
+        void printSpinner(const std::string& elementToPrint);
+        bool detectEscapeToStop();
         std::string doSpacesInText(const std::string& text);
         std::string removeSpaces(const std::string& baseline);
     public:
