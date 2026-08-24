@@ -4,37 +4,31 @@
 #include "terminal/TerminalSetup.hpp"
 #include "terminal/RawMode.hpp"
 #include "terminal/render/Render.hpp"
+#include "terminal/TerminalSpinner.hpp"
 
 #include <atomic>
 #include <thread>
 #include <chrono>
 #include <string>
 
-constexpr int DELAY = 35;
 const std::string SPACING = "  ";
-
-
-struct SpinnerState {
-    std::atomic<bool> thinking{false};
-    std::thread spinner;
-};
 
 class TerminalOutput : public IOutput {
     private:
         TerminalSetup& setup;
         Render& render;
-        SpinnerState spinnerState;
+        Spinner spinner;
         std::atomic<bool>& cancelRequesting;
         std::optional<RawMode> rawMode;
-        void printSpinner(const std::string& elementToPrint);
+        void printSpinnerElement(const std::string& elementToPrint);
         bool detectEscapeToStop();
         std::string removeSpaces(const std::string& baseline);
     public:
         TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)
             : setup(_setup), cancelRequesting(_cancelRequesting), render(_render) {}
         void show(const std::string& text) override;
-        void startSpinner() override;
-        void stopSpinner() override;
+        void startThinking() override;
+        void stopThinking() override;
         void showUserText(const std::string& text) override;
 };
 
@@ -46,7 +40,7 @@ class CompositeOutput : public IOutput {
         CompositeOutput(IOutput& terminalOutput, IOutput& voiceOutput) 
             : terminalOutputLink(terminalOutput), voiceOutputLink(voiceOutput) {}
         void show(const std::string& text) override;
-        void startSpinner() override;
-        void stopSpinner() override;
+        void startThinking() override;
+        void stopThinking() override;
         void showUserText(const std::string& text) override;
 };

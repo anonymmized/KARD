@@ -14,7 +14,7 @@ void TerminalOutput::show(const std::string& text) {
     render.appendText("KARD: " + text + "\n\n");
 }
 
-void TerminalOutput::printSpinner(const std::string& elementToPrint) {
+void TerminalOutput::printSpinnerElement(const std::string& elementToPrint) {
     std::cout << '\r' << setup.getGrey() + elementToPrint + setup.getReset() << std::flush;
 }
 
@@ -26,30 +26,18 @@ bool TerminalOutput::detectEscapeToStop() {
     return false;
 }
 
-void TerminalOutput::startSpinner() {
+void TerminalOutput::startThinking() {
     if (!setup.isInteractive()) {
         return;
     }
-    cancelRequesting = false;
-    spinnerState.thinking = true;
     rawMode.emplace();
-    spinnerState.spinner = std::thread([this] {
-    const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
-        int i = 0;
-        while (spinnerState.thinking) {
-            printSpinner(frames[i++ % 10]);
-            cancelRequesting = detectEscapeToStop();
-            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
-        }
-        std::cout << "\r\033[K" << std::flush;
-    });
+    std::cout << setup.getGrey();
+    spinner.start(cancelRequesting);
+    std::cout << setup.getReset();
 }
 
-void TerminalOutput::stopSpinner() {
-    spinnerState.thinking = false;
-    if (spinnerState.spinner.joinable()) {
-        spinnerState.spinner.join();
-    }
+void TerminalOutput::stopThinking() {
+    spinner.stop();
     rawMode.reset();
 }
 
@@ -77,14 +65,14 @@ void CompositeOutput::show(const std::string& text) {
     voiceOutputLink.show(text);
 }
 
-void CompositeOutput::startSpinner() {
-    terminalOutputLink.startSpinner();
-    voiceOutputLink.startSpinner();
+void CompositeOutput::startThinking() {
+    terminalOutputLink.startThinking();
+    voiceOutputLink.startThinking();
 }
 
-void CompositeOutput::stopSpinner() {
-    terminalOutputLink.stopSpinner();
-    voiceOutputLink.stopSpinner();
+void CompositeOutput::stopThinking() {
+    terminalOutputLink.stopThinking();
+    voiceOutputLink.stopThinking();
 }
 
 void CompositeOutput::showUserText(const std::string& text) {
