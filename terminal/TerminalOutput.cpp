@@ -14,17 +14,6 @@ void TerminalOutput::show(const std::string& text) {
     render.appendText("KARD: " + text + "\n\n");
 }
 
-std::string TerminalOutput::doSpacesInText(const std::string& text) {
-    std::string result = "";
-    for (char symbol : text) {
-        result += symbol;
-        if (symbol == '\n') {
-            result += SPACING;
-        }
-    }
-    return result;
-}
-
 void TerminalOutput::printSpinner(const std::string& elementToPrint) {
     std::cout << '\r' << setup.getGrey() + elementToPrint + setup.getReset() << std::flush;
 }
@@ -37,17 +26,17 @@ bool TerminalOutput::detectEscapeToStop() {
     return false;
 }
 
-void TerminalOutput::startThinking() {
+void TerminalOutput::startSpinner() {
     if (!setup.isInteractive()) {
         return;
     }
     cancelRequesting = false;
-    thinking = true;
+    spinnerState.thinking = true;
     rawMode.emplace();
-    spinner = std::thread([this] {
+    spinnerState.spinner = std::thread([this] {
     const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
         int i = 0;
-        while (thinking) {
+        while (spinnerState.thinking) {
             printSpinner(frames[i++ % 10]);
             cancelRequesting = detectEscapeToStop();
             std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
@@ -56,10 +45,10 @@ void TerminalOutput::startThinking() {
     });
 }
 
-void TerminalOutput::stopThinking() {
-    thinking = false;
-    if (spinner.joinable()) {
-        spinner.join();
+void TerminalOutput::stopSpinner() {
+    spinnerState.thinking = false;
+    if (spinnerState.spinner.joinable()) {
+        spinnerState.spinner.join();
     }
     rawMode.reset();
 }
@@ -88,14 +77,14 @@ void CompositeOutput::show(const std::string& text) {
     voiceOutputLink.show(text);
 }
 
-void CompositeOutput::startThinking() {
-    terminalOutputLink.startThinking();
-    voiceOutputLink.startThinking();
+void CompositeOutput::startSpinner() {
+    terminalOutputLink.startSpinner();
+    voiceOutputLink.startSpinner();
 }
 
-void CompositeOutput::stopThinking() {
-    terminalOutputLink.stopThinking();
-    voiceOutputLink.stopThinking();
+void CompositeOutput::stopSpinner() {
+    terminalOutputLink.stopSpinner();
+    voiceOutputLink.stopSpinner();
 }
 
 void CompositeOutput::showUserText(const std::string& text) {

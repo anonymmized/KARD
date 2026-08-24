@@ -13,25 +13,28 @@
 constexpr int DELAY = 35;
 const std::string SPACING = "  ";
 
+
+struct SpinnerState {
+    std::atomic<bool> thinking{false};
+    std::thread spinner;
+};
+
 class TerminalOutput : public IOutput {
     private:
         TerminalSetup& setup;
         Render& render;
-        std::chrono::steady_clock::time_point thinkingStart;
-        std::atomic<bool> thinking{false};
-        std::atomic<bool> &cancelRequesting;
+        SpinnerState spinnerState;
+        std::atomic<bool>& cancelRequesting;
         std::optional<RawMode> rawMode;
-        std::thread spinner;
         void printSpinner(const std::string& elementToPrint);
         bool detectEscapeToStop();
-        std::string doSpacesInText(const std::string& text);
         std::string removeSpaces(const std::string& baseline);
     public:
         TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)
             : setup(_setup), cancelRequesting(_cancelRequesting), render(_render) {}
         void show(const std::string& text) override;
-        void startThinking() override;
-        void stopThinking() override;
+        void startSpinner() override;
+        void stopSpinner() override;
         void showUserText(const std::string& text) override;
 };
 
@@ -43,7 +46,7 @@ class CompositeOutput : public IOutput {
         CompositeOutput(IOutput& terminalOutput, IOutput& voiceOutput) 
             : terminalOutputLink(terminalOutput), voiceOutputLink(voiceOutput) {}
         void show(const std::string& text) override;
-        void startThinking() override;
-        void stopThinking() override;
+        void startSpinner() override;
+        void stopSpinner() override;
         void showUserText(const std::string& text) override;
 };

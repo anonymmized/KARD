@@ -26,9 +26,9 @@ void KardCore::run() {
       return;
     }
     interfaces.output.showUserText(userText);
-    interfaces.output.startThinking();
+    interfaces.output.startSpinner();
     std::string ans = interfaces.brain.ask(userText);
-    interfaces.output.stopThinking();
+    interfaces.output.stopSpinner();
 
     if (!cancelRequesting) {
       interfaces.output.show(ans);
