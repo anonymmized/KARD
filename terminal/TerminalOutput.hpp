@@ -8,7 +8,6 @@
 
 #include <atomic>
 #include <thread>
-#include <chrono>
 #include <string>
 
 const std::string SPACING = "  ";

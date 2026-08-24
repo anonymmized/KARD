@@ -9,7 +9,7 @@ struct State {
     int outputHeight = 0;
 };
 
-enum class RenderStates {
+enum RenderStates {
     Scroll,
     Rewrite
 };
@@ -39,7 +39,6 @@ class Render {
     public:
         Render() {
             termSize = getTermSize();
-            state.outputHeight = calculateOutputHeight(termSize.rows);
         }
         void appendText(const std::string& textToAppend);
         void scrollUp(int lines);

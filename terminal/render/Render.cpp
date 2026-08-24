@@ -124,17 +124,17 @@ void Render::appendText(const std::string& textToAppend) {
     state.wrappedLines = wrapText(allText, termSize.cols);
     state.outputHeight = calculateOutputHeight(termSize.rows);
     scrollToBottom();
-    render(RenderStates::Rewrite);
+    render(Rewrite);
 }
 
 void Render::scrollUp(int lines) {
     state.firstVisible -= lines;
     clampViewport();
-    render(RenderStates::Scroll);
+    render(Scroll);
 }
 
 void Render::scrollDown(int lines) {
     state.firstVisible += lines;
     clampViewport();
-    render(RenderStates::Scroll);
+    render(Scroll);
 }

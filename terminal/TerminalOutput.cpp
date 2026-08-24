@@ -10,7 +10,7 @@ void TerminalOutput::show(const std::string& text) {
         std::cout << text << '\n' << std::flush;
         return;
     }
-    render.appendText("KARD: " + text + "\n\n");
+    render.appendText(text + "\n\n");
 }
 
 void TerminalOutput::startThinking() {
