@@ -1,7 +1,6 @@
 #include "terminal/TerminalOutput.hpp"
 #include "RawMode.hpp"
 
-#include <chrono>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -12,18 +11,6 @@ void TerminalOutput::show(const std::string& text) {
         return;
     }
     render.appendText("KARD: " + text + "\n\n");
-}
-
-void TerminalOutput::printSpinnerElement(const std::string& elementToPrint) {
-    std::cout << '\r' << setup.getGrey() + elementToPrint + setup.getReset() << std::flush;
-}
-
-bool TerminalOutput::detectEscapeToStop() {
-    char chr;
-    if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
-        return true;
-    }
-    return false;
 }
 
 void TerminalOutput::startThinking() {

@@ -20,8 +20,6 @@ class TerminalOutput : public IOutput {
         Spinner spinner;
         std::atomic<bool>& cancelRequesting;
         std::optional<RawMode> rawMode;
-        void printSpinnerElement(const std::string& elementToPrint);
-        bool detectEscapeToStop();
         std::string removeSpaces(const std::string& baseline);
     public:
         TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)
