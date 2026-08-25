@@ -20,92 +20,20 @@ Render::TermSize Render::getTermSize() {
     return termSize;
 }
 
-int Render::utf8CharLength(unsigned char lead) {
-    if ((lead & 0x80) == 0x00) return 1;
-    if ((lead & 0xE0) == 0xC0) return 2;
-    if ((lead & 0xF0) == 0xE0) return 3;
-    if ((lead & 0xF8) == 0xF0) return 4;
-    return 1;
-}
-
-std::vector<std::string> Render::wrapText(const std::string& targetText, int width) {
-    std::vector<std::string> wrappedText;
-    std::string line;
-    int lineWidth = 0;
-    for (size_t charIndex = 0; charIndex < targetText.size();) {
-        unsigned char lead = static_cast<unsigned char>(targetText[charIndex]);
-        int charLen = utf8CharLength(lead);
-
-        if (charIndex + charLen > targetText.size()) {
-            charLen = 1;
-        }
-
-        std::string symbol = targetText.substr(charIndex, charLen);
-        charIndex += charLen;
-
-        if (symbol == "\n" || symbol == "\r") {
-            wrappedText.push_back(line);
-            line.clear();
-            lineWidth = 0;
-            continue;
-        }
-
-        if (lineWidth >= width - 1) {
-            wrappedText.push_back(line);
-            line.clear();
-            lineWidth = 0;
-        }
-
-        line += symbol;
-        lineWidth += 1;
-    }
-
-    if (!line.empty()) {
-        wrappedText.push_back(line);
-    }
-    return wrappedText;
-}
-
-int Render::calculateOutputHeight(int termHeight) {
-    return termHeight - NUM_OF_RESERVED_LINES;
-}
-
-int Render::maxFirstVisible() {
-    int linesCount = static_cast<int>(state.wrappedLines.size());
-    if (linesCount <= state.outputHeight) {
-        return 0;
-    }
-    return linesCount - state.outputHeight;
-}
-
-void Render::clampViewport() {
-    if (state.firstVisible < 0) {
-        state.firstVisible = 0;
-    }
-    int maxFirst = maxFirstVisible();
-    if (state.firstVisible > maxFirst) {
-        state.firstVisible = maxFirst;
-    }
-}
-
-void Render::scrollToBottom() {
-    state.firstVisible = maxFirstVisible();
-}
-
 void Render::render(RenderStates renderState) {
-    for (int i = 0; i < state.outputHeight; i++) {
-        int lineIndex = state.firstVisible + i;
+    for (int i = 0; i < scroller.getOutputHeight(); i++) {
+        int lineIndex = scroller.getFirstVisible() + i;
         std::cout << "\033[" << i + 1 << ";1H";
         std::cout << "\033[2K";
-        if (lineIndex < state.wrappedLines.size()) {
+        if (lineIndex < wrappedLines.size()) {
             if (renderState == RenderStates::Rewrite) {
                 if (lineIndex >= oldWrappedCount) {
-                    typewriteText(state.wrappedLines[lineIndex]);
+                    typewriteText(wrappedLines[lineIndex]);
                 } else {
-                    std::cout << state.wrappedLines[lineIndex] << std::flush;
+                    std::cout << wrappedLines[lineIndex] << std::flush;
                 }
             } else if (renderState == RenderStates::Scroll) {
-                std::cout << state.wrappedLines[lineIndex]<< std::flush;
+                std::cout << wrappedLines[lineIndex]<< std::flush;
             }
         }
     }
@@ -120,21 +48,10 @@ void Render::typewriteText(const std::string& textToWrite) {
 
 void Render::appendText(const std::string& textToAppend) {
     allText += textToAppend;
-    oldWrappedCount = state.wrappedLines.size();
-    state.wrappedLines = wrapText(allText, termSize.cols);
-    state.outputHeight = calculateOutputHeight(termSize.rows);
-    scrollToBottom();
+    oldWrappedCount = wrappedLines.size();
+    wrappedLines = wrapText(allText, termSize.cols);
+    scroller.setTermHeight(termSize.rows);
+    scroller.calculateOutputHeight();
+    scroller.scrollToBottom();
     render(Rewrite);
-}
-
-void Render::scrollUp(int lines) {
-    state.firstVisible -= lines;
-    clampViewport();
-    render(Scroll);
-}
-
-void Render::scrollDown(int lines) {
-    state.firstVisible += lines;
-    clampViewport();
-    render(Scroll);
 }

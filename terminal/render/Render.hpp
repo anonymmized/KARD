@@ -19,10 +19,12 @@ const int LINES_TO_SCROLL = 1;
 
 class Render {
     private:
+        std::vector<std::string> wrappedLines;
         struct TermSize {
             int cols = 80;
             int rows = 24;
         };
+        Scroller scroller;
         int oldWrappedCount;
         State state;
         std::string allText;
