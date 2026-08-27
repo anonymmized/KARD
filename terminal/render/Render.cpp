@@ -50,6 +50,7 @@ void Render::appendText(const std::string& textToAppend) {
     allText += textToAppend;
     oldWrappedCount = wrappedLines.size();
     wrappedLines = wrapper.wrapText(allText, termSize.cols);
+    scroller.setLinesCount(static_cast<int>(wrappedLines.size()));
     scroller.setTermHeight(termSize.rows);
     scroller.calculateOutputHeight();
     scroller.scrollToBottom();
