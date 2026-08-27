@@ -1,4 +1,4 @@
-#include "Render.hpp"
+#include "terminal/render/Render.hpp"
 #include <string>
 #include <vector>
 #include <sys/ioctl.h>
@@ -49,9 +49,19 @@ void Render::typewriteText(const std::string& textToWrite) {
 void Render::appendText(const std::string& textToAppend) {
     allText += textToAppend;
     oldWrappedCount = wrappedLines.size();
-    wrappedLines = wrapText(allText, termSize.cols);
+    wrappedLines = wrapper.wrapText(allText, termSize.cols);
     scroller.setTermHeight(termSize.rows);
     scroller.calculateOutputHeight();
     scroller.scrollToBottom();
     render(Rewrite);
+}
+
+void Render::scrollUp(int lines) {
+    scroller.up(lines);
+    render(Scroll);
+}
+
+void Render::scrollDown(int lines) {
+    scroller.down(lines);
+    render(Scroll);
 }

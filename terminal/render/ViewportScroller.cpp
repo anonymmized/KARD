@@ -25,12 +25,12 @@ void Scroller::scrollToBottom() {
     firstVisible = maxFirstVisible();
 }
 
-void Scroller::scrollUp(int lines) {
+void Scroller::up(int lines) {
     firstVisible -= lines;
     clampViewport();
 }
 
-void Scroller::scrollDown(int lines) {
+void Scroller::down(int lines) {
     firstVisible += lines;
     clampViewport();
 }

@@ -12,8 +12,8 @@ class Scroller {
         void clampViewport();
     public:
         void scrollToBottom();
-        void scrollUp(int lines);
-        void scrollDown(int lines);
+        void up(int lines);
+        void down(int lines);
         void setLinesCount(int _linesCount) { linesCount = _linesCount; }
         void setTermHeight(int _termHeight) { termHeight = _termHeight; }
         void calculateOutputHeight();
