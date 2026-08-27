@@ -16,12 +16,12 @@ class TerminalSetup {
         std::string reset;
         std::string grey;
         std::string greyBackground;
+        void setTerminalSize();
     public:
         TerminalSetup();
         TerminalSetup(const TerminalSetup&) = delete;
         TerminalSetup& operator=(const TerminalSetup&) = delete;
         ~TerminalSetup();
-        void setTerminalSize();
         int getOutputBottom() { return termSize.rows - RESERVED_LINES; }
         int getInputRow() { return termSize.rows - 1; }
         int getCols() { return termSize.cols; }

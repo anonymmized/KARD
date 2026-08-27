@@ -1,7 +1,6 @@
 #include "terminal/TerminalOutput.hpp"
 #include "RawMode.hpp"
 
-#include <chrono>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -11,70 +10,32 @@ void TerminalOutput::show(const std::string& text) {
         std::cout << text << '\n' << std::flush;
         return;
     }
-    std::cout << "\033[?25l" << "\033[u";
-    std::cout << "\n➤ ";
-    std::string spacedText = doSpacesInText(text);
-    typewriteText(spacedText);
-    std::cout << "\n\n" << "\033[s" << "\033[?25h" << std::flush;
-}
-
-std::string TerminalOutput::doSpacesInText(const std::string& text) {
-    std::string result = "";
-    for (char symbol : text) {
-        result += symbol;
-        if (symbol == '\n') {
-            result += SPACING;
-        }
-    }
-    return result;
-}
-
-void TerminalOutput::typewriteText(const std::string& textToShow) {
-    for (char symbol : textToShow) {
-        std::cout << symbol << std::flush;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    }
+    render.appendText(text + "\n\n");
 }
 
 void TerminalOutput::startThinking() {
     if (!setup.isInteractive()) {
         return;
     }
-    cancelRequesting = false;
-    thinking = true;
     rawMode.emplace();
-    spinner = std::thread([this] {
-    const char *frames[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
-        int i = 0;
-        while (thinking) {
-            std::cout << '\r' << setup.getGrey() + frames[i++ % 10] + setup.getReset() << std::flush;
-            char chr;
-            if (read(STDIN_FILENO, &chr, 1) == 1 && chr == 27) {
-                cancelRequesting = true;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY));
-        }
-        std::cout << "\r\033[K" << std::flush;
-    });
+    std::cout << setup.getGrey();
+    spinner.start(cancelRequesting);
+    std::cout << setup.getReset();
 }
 
 void TerminalOutput::stopThinking() {
-    thinking = false;
-    if (spinner.joinable()) {
-        spinner.join();
-    }
+    spinner.stop();
     rawMode.reset();
 }
 
 void TerminalOutput::showUserText(const std::string& text) {
     std::string newText = removeSpaces(text);
+    std::cout << "\033[" << setup.getInputRow() << ";1H\033[2K";
     if (!setup.isInteractive()) {
         std::cout << "> " << newText << '\n' << std::flush;
         return;
     }
-    std::cout << "\033[?25l" << "\033[u";
-    std::cout << setup.getGrey() << "➤ " << setup.getReset() << setup.getGreyBackground() << newText << setup.getReset() << '\n';
-    std::cout << "\033[s" << "\033[?25h" << std::flush;
+    render.appendText(setup.getGrey() + "> " + newText + "\n" + setup.getReset());
 }
 
 std::string TerminalOutput::removeSpaces(const std::string& baseline) {
