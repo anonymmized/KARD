@@ -6,7 +6,6 @@
 #include <thread>
 
 std::string TerminalInput::read() {
-    enableMouseDetection();
     if (!setup.isInteractive()) {
         std::string line;
         if (!std::getline(std::cin, line)) {
@@ -14,6 +13,7 @@ std::string TerminalInput::read() {
         }
         return line;
     }
+    enableMouseDetection();
     RawMode rawMode;
     std::string line;
     redraw(line);

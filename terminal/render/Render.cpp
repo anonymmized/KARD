@@ -8,6 +8,10 @@
 #include <chrono>
 #include <thread>
 
+Render::Render(TermSize _termSize) {
+    termSize = _termSize;
+}
+
 void Render::render(RenderStates renderState) {
     for (int i = 0; i < scroller.getOutputHeight(); i++) {
         int lineIndex = scroller.getFirstVisible() + i;

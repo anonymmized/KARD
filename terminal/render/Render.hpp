@@ -25,9 +25,7 @@ class Render {
         TermSize termSize;
         void render(RenderStates renderState);
     public:
-        Render(TermSize _termSize) {
-            termSize = _termSize;
-        }
+        Render(TermSize _termSize);
         void appendText(const std::string& textToAppend);
         void scrollUp(int lines);
         void scrollDown(int lines);
