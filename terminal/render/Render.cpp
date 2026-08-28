@@ -23,12 +23,12 @@ Render::TermSize Render::getTermSize() {
 void Render::render(RenderStates renderState) {
     for (int i = 0; i < scroller.getOutputHeight(); i++) {
         int lineIndex = scroller.getFirstVisible() + i;
-        std::cout << "\033[" << i + 1 << ";1H";
-        std::cout << "\033[2K";
+        viewer.moveCursor(i + 1);
+        viewer.clearLine();
         if (lineIndex < wrappedLines.size()) {
             if (renderState == RenderStates::Rewrite) {
                 if (lineIndex >= oldWrappedCount) {
-                    typewriteText(wrappedLines[lineIndex]);
+                    viewer.typewriteText(wrappedLines[lineIndex]);
                 } else {
                     std::cout << wrappedLines[lineIndex] << std::flush;
                 }
@@ -36,13 +36,6 @@ void Render::render(RenderStates renderState) {
                 std::cout << wrappedLines[lineIndex]<< std::flush;
             }
         }
-    }
-}
-
-void Render::typewriteText(const std::string& textToWrite) {
-    for (char symbol : textToWrite) {
-        std::cout << symbol << std::flush;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }
 
