@@ -25,6 +25,7 @@ class TerminalSetup {
         int getOutputBottom() { return termSize.rows - RESERVED_LINES; }
         int getInputRow() { return termSize.rows - 1; }
         int getCols() { return termSize.cols; }
+        TermSize getTermSize() { return termSize; }
         const std::string getGrey() const { return grey; }
         const std::string getGreyBackground() const { return greyBackground; }
         const std::string getReset() const { return reset; }

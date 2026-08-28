@@ -8,18 +8,6 @@
 #include <chrono>
 #include <thread>
 
-Render::TermSize Render::getTermSize() {
-    Render::TermSize termSize;
-    winsize ws{};
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
-        termSize.cols = ws.ws_col;
-        termSize.rows = ws.ws_row;
-    } else {
-        perror("ioctl");
-    }
-    return termSize;
-}
-
 void Render::render(RenderStates renderState) {
     for (int i = 0; i < scroller.getOutputHeight(); i++) {
         int lineIndex = scroller.getFirstVisible() + i;
@@ -30,10 +18,10 @@ void Render::render(RenderStates renderState) {
                 if (lineIndex >= oldWrappedCount) {
                     viewer.typewriteText(wrappedLines[lineIndex]);
                 } else {
-                    std::cout << wrappedLines[lineIndex] << std::flush;
+                    viewer.printLine(wrappedLines[lineIndex]);
                 }
             } else if (renderState == RenderStates::Scroll) {
-                std::cout << wrappedLines[lineIndex]<< std::flush;
+                viewer.printLine(wrappedLines[lineIndex]);
             }
         }
     }

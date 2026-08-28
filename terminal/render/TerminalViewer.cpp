@@ -19,3 +19,7 @@ void Viewer::typewriteText(const std::string& text) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }
+
+void Viewer::printLine(const std::string& text) {
+    std::cout << text << std::flush;
+}
