@@ -58,11 +58,11 @@ void Render::appendText(const std::string& textToAppend) {
 }
 
 void Render::scrollUp(int lines) {
-    scroller.up(lines);
+    scroller.scroll(lines * -1);
     render(Scroll);
 }
 
 void Render::scrollDown(int lines) {
-    scroller.down(lines);
+    scroller.scroll(lines);
     render(Scroll);
 }
