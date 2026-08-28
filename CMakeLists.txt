@@ -32,7 +32,8 @@ add_executable(kard brain/OllamaBrain.cpp brain/ToolRegistry.cpp core/argsParse.
                body/snapshot_log.cpp body/paths.cpp selfupdate/selfUpdate.cpp selfupdate/commandBuilder.cpp
                selfupdate/updatePaths.cpp selfupdate/commandRunner.cpp selfupdate/fileOps.cpp ${HOST_METRICS}
                body/monitoring/dockerMetrics.cpp voice/voice.cpp terminal/TerminalSetup.cpp terminal/render/Render.cpp 
-               terminal/TerminalSpinner.cpp terminal/render/TextWrapper.cpp)
+               terminal/TerminalSpinner.cpp terminal/render/TextWrapper.cpp terminal/render/ViewportScroller.cpp
+               terminal/render/TerminalViewer.cpp)
 target_include_directories(kard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(kard PRIVATE SNAPSHOT_BIN="$<TARGET_FILE:kard-snapshot>" CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/brain/config.json")
 

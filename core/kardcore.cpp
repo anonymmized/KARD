@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 
   std::atomic<bool> cancelRequesting{false};
   TerminalSetup setup;
-  Render render;
+  Render render(setup.getTermSize());
   TerminalInput terminalInput(setup, render);
   OllamaBrain ollama(cancelRequesting); 
   TerminalOutput terminalOutput(setup, cancelRequesting, render); 
