@@ -1,3 +1,5 @@
+#include "terminal/render/TerminalMessage.hpp"
+#include "terminal/render/TerminalBuffer.hpp"
 #include "terminal/TerminalInput.hpp"
 #include "terminal/RawMode.hpp"
 
@@ -38,6 +40,18 @@ std::string TerminalInput::read() {
                 redraw(line);
                 continue;
             }
+            if (sequence == "[A") {
+                Message previousMessage = buffer.getPreviousMessage();
+                line = previousMessage.messageText;
+                redraw(line);
+                continue;
+            }
+            if (sequence == "[B") {
+                Message nextMessage = buffer.getNextMessage();
+                line = nextMessage.messageText;
+                redraw(line);
+                continue;
+            }
         }
         if (symbol == 127 || symbol == 8) {
             if (!line.empty()) {
@@ -52,6 +66,7 @@ std::string TerminalInput::read() {
         redraw(line);
     }
     disableMouseDetection();
+    buffer.appendMessageToBuffer(line, MessageRole::User);
     return line;
 }
 

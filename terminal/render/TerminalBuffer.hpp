@@ -7,7 +7,8 @@
 class TerminalBuffer {
     private:
         std::vector<Message> messages;
-        int currentMessageIndex = -1;
+        int currentMessageIndex = 0;
+        Message clearMessage = {MessageRole::User, ""};
     public:
         void appendMessageToBuffer(const std::string& messageToAppend, MessageRole role);
         Message getPreviousMessage();

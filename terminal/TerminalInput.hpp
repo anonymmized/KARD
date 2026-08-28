@@ -3,12 +3,14 @@
 #include "contracts/IInput.hpp"
 #include "terminal/TerminalSetup.hpp"
 #include "terminal/render/Render.hpp"
+#include "terminal/render/TerminalBuffer.hpp"
 #include <string>
 
 class TerminalInput : public IInput {
     private:
         TerminalSetup& setup;
         Render& render;
+        TerminalBuffer buffer;
         void redraw(const std::string& line);
         std::string readEscapeSequenceForMouse();
         void enableMouseDetection();
