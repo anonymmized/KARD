@@ -1,12 +1,6 @@
 #include "terminal/render/Render.hpp"
 #include <string>
 #include <vector>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <cstdio>
-#include <iostream>
-#include <chrono>
-#include <thread>
 
 Render::Render(TermSize _termSize) {
     termSize = _termSize;
