@@ -2,7 +2,6 @@
 
 #include "contracts/IBrain.hpp"
 #include "brain/ToolRegistry.hpp"
-#include "ModelAnswer.hpp"
 
 #include <atomic>
 #include <cpr/cpr.h>
@@ -13,7 +12,7 @@ constexpr int MAX_TOOL_ITERATIONS = 5;
 
 class OllamaBrain : public IBrain {
     private:
-        ModelAnswer modelAnswer;
+        BrainAnswer brainAnswer;
         ToolRegistry toolRegistry;
         std::string url;
         std::atomic<bool> &cancelRequesting;
@@ -27,11 +26,11 @@ class OllamaBrain : public IBrain {
 
     public:
         OllamaBrain(std::atomic<bool> &_cancelRequesting) 
-            : modelAnswer{},
-              toolRegistry(&modelAnswer),
+            : brainAnswer{},
+              toolRegistry(&brainAnswer),
               cancelRequesting(_cancelRequesting) {
             config = uploadConfig();
             url = config["url"];
         }
-        std::string ask(const std::string &request);
+        BrainAnswer ask(const std::string &request);
 };

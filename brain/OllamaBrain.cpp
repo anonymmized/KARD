@@ -41,13 +41,14 @@ void OllamaBrain::pushToolContent(const std::string &content) {
     base.push_back({{"role", "tool"}, {"content", content}});
 }
 
-std::string OllamaBrain::ask(const std::string &request) {
+BrainAnswer OllamaBrain::ask(const std::string &request) {
     base.push_back({{"role", "user"}, {"content", request}});
     int remainingIterations = MAX_TOOL_ITERATIONS;
     std::string stringReply;
     while (remainingIterations != 0) {
         if (needToStop()) {
-        return "";
+            brainAnswer.plainAnswer = "";
+            return brainAnswer;
         }
         nlohmann::json body = getBody();
 
@@ -59,19 +60,21 @@ std::string OllamaBrain::ask(const std::string &request) {
         }));
 
         if (resp.status_code != 200) {
-            return "It seems an error)\n";
+            brainAnswer.plainAnswer = "It seems an error)\n";
+            return brainAnswer;
         }
 
         if (needToStop()) {
-            return "";
+            brainAnswer.plainAnswer = "";
+            return brainAnswer;
         }
 
         auto reply = nlohmann::json::parse(resp.text);
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) {
             stringReply = reply["message"]["content"].get<std::string>();
-            modelAnswer.plainAnswer = stringReply;
-            return stringReply;
+            brainAnswer.plainAnswer = stringReply;
+            return brainAnswer;
         }
 
         for (const auto &call : reply["message"]["tool_calls"]) {
@@ -83,6 +86,6 @@ std::string OllamaBrain::ask(const std::string &request) {
         stringReply = reply["message"]["content"].get<std::string>();
         remainingIterations -= 1;
     }
-    modelAnswer.plainAnswer = stringReply;
-    return stringReply;
+    brainAnswer.plainAnswer = stringReply;
+    return brainAnswer;
 }

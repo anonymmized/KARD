@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ModelAnswer.hpp"
+#include "contracts/BrainAnswer.hpp"
 
 #include <string>
 #include <vector>
@@ -15,23 +15,23 @@ inline const std::string TOOL_NOT_EXIST = "There is no tool like this.";
 class ToolRegistry {
     private:
         std::unordered_map<std::string, std::string*> fields;
-        ModelAnswer* modelAnswer;
+        BrainAnswer* brainAnswer;
         int parsePeriod(const std::string& period);
         void updateModelAnswer(const std::string& toolName, const std::string& toolState);
     public:
-        ToolRegistry(ModelAnswer* _modelAnswer) : modelAnswer(_modelAnswer) {
-            if (modelAnswer == nullptr) {
+        ToolRegistry(BrainAnswer* _brainAnswer) : brainAnswer(_brainAnswer) {
+            if (brainAnswer == nullptr) {
                 throw std::invalid_argument("ModelAnswer is null");
             }
             fields = {
-                {"get_cpu", &modelAnswer->cpuUsage},
-                {"get_ram", &modelAnswer->ramUsage},
-                {"get_disk", &modelAnswer->diskSpace},
-                {"get_uptime", &modelAnswer->uptime},
-                {"get_temp", &modelAnswer->temp},
-                {"get_docker_status", &modelAnswer->dockerStatus},
-                {"get_docker_running", &modelAnswer->dockerIsRunning},
-                {"get_docker_list", &modelAnswer->dockerList}
+                {"get_cpu", &brainAnswer->cpuUsage},
+                {"get_ram", &brainAnswer->ramUsage},
+                {"get_disk", &brainAnswer->diskSpace},
+                {"get_uptime", &brainAnswer->uptime},
+                {"get_temp", &brainAnswer->temp},
+                {"get_docker_status", &brainAnswer->dockerStatus},
+                {"get_docker_running", &brainAnswer->dockerIsRunning},
+                {"get_docker_list", &brainAnswer->dockerList}
             };
         }
         std::string runToolCall(const nlohmann::json& call);
