@@ -9,23 +9,33 @@
 
 constexpr int MAX_TOOL_ITERATIONS = 5;
 
-class OllamaBrain : public IBrain {
-private:
-  std::string url;
-  std::atomic<bool> &cancelRequesting;
-  std::vector<nlohmann::json> base;
-  nlohmann::json config;
-  nlohmann::json uploadConfig();
-  nlohmann::json getBody();
-  nlohmann::json collectAllMessages(const std::string &systemPrompt);
-  bool needToStop();
-  void pushToolContent(const std::string &content);
+struct ModelAnswer {
+    std::string plainAnswer;
+    std::string cpuUsage;
+    std::string ramUsage;
+    std::string diskSpace;
+    std::string temp;
+    std::string dockerStatus;
+    std::string dockerIsRunning;
+    std::string dockerList;
+};
 
-public:
-  OllamaBrain(std::atomic<bool> &_cancelRequesting)
-      : cancelRequesting(_cancelRequesting) {
-    config = uploadConfig();
-    url = config["url"];
-  }
-  std::string ask(const std::string &request);
+class OllamaBrain : public IBrain {
+    private:
+        std::string url;
+        std::atomic<bool> &cancelRequesting;
+        std::vector<nlohmann::json> base;
+        nlohmann::json config;
+        nlohmann::json uploadConfig();
+        nlohmann::json getBody();
+        nlohmann::json collectAllMessages(const std::string &systemPrompt);
+        bool needToStop();
+        void pushToolContent(const std::string &content);
+
+    public:
+        OllamaBrain(std::atomic<bool> &_cancelRequesting) : cancelRequesting(_cancelRequesting) {
+            config = uploadConfig();
+            url = config["url"];
+        }
+        std::string ask(const std::string &request);
 };

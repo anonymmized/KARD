@@ -21,65 +21,64 @@ nlohmann::json OllamaBrain::uploadConfig() {
 
 bool OllamaBrain::needToStop() { return cancelRequesting; }
 
-nlohmann::json
-OllamaBrain::collectAllMessages(const std::string &systemPrompt) {
-  nlohmann::json allMessages = nlohmann::json::array();
-  allMessages.push_back({{"role", "system"}, {"content", systemPrompt}});
+nlohmann::json OllamaBrain::collectAllMessages(const std::string &systemPrompt) {
+    nlohmann::json allMessages = nlohmann::json::array();
+    allMessages.push_back({{"role", "system"}, {"content", systemPrompt}});
 
-  for (const auto &part : base) {
-    allMessages.push_back(part);
-  }
-  return allMessages;
+    for (const auto &part : base) {
+        allMessages.push_back(part);
+    }
+    return allMessages;
 }
 
 nlohmann::json OllamaBrain::getBody() {
-  nlohmann::json body = config;
-  body["messages"] = collectAllMessages(config["system_prompt"]);
-  return body;
+    nlohmann::json body = config;
+    body["messages"] = collectAllMessages(config["system_prompt"]);
+    return body;
 }
 
 void OllamaBrain::pushToolContent(const std::string &content) {
-  base.push_back({{"role", "tool"}, {"content", content}});
+    base.push_back({{"role", "tool"}, {"content", content}});
 }
 
 std::string OllamaBrain::ask(const std::string &request) {
-  base.push_back({{"role", "user"}, {"content", request}});
-  int remainingIterations = MAX_TOOL_ITERATIONS;
-  std::string stringReply;
-  while (remainingIterations != 0) {
-    if (needToStop()) {
-      return "";
-    }
-    nlohmann::json body = getBody();
+    base.push_back({{"role", "user"}, {"content", request}});
+    int remainingIterations = MAX_TOOL_ITERATIONS;
+    std::string stringReply;
+    while (remainingIterations != 0) {
+        if (needToStop()) {
+        return "";
+        }
+        nlohmann::json body = getBody();
 
-    cpr::Response resp = cpr::Post(
-        cpr::Url(url), cpr::Body{body.dump()},
-        cpr::Header{{"Content-Type", "application/json"}},
-        cpr::ProgressCallback([this](auto, auto, auto, auto, auto) -> bool {
-          return !cancelRequesting;
+        cpr::Response resp = cpr::Post(
+            cpr::Url(url), cpr::Body{body.dump()},
+            cpr::Header{{"Content-Type", "application/json"}},
+            cpr::ProgressCallback([this](auto, auto, auto, auto, auto) -> bool {
+            return !cancelRequesting;
         }));
 
-    if (resp.status_code != 200) {
-      return "It seems an error)\n";
-    }
+        if (resp.status_code != 200) {
+            return "It seems an error)\n";
+        }
 
-    if (needToStop()) {
-      return "";
-    }
+        if (needToStop()) {
+            return "";
+        }
 
-    auto reply = nlohmann::json::parse(resp.text);
-    base.push_back(reply["message"]);
-    if (!reply["message"].contains("tool_calls")) {
-      return reply["message"]["content"].get<std::string>();
-    }
+        auto reply = nlohmann::json::parse(resp.text);
+        base.push_back(reply["message"]);
+        if (!reply["message"].contains("tool_calls")) {
+            return reply["message"]["content"].get<std::string>();
+        }
 
-    for (const auto &call : reply["message"]["tool_calls"]) {
-      pushToolContent(runToolCall(call));
-    }
-    removeUselessObjects(base);
+        for (const auto &call : reply["message"]["tool_calls"]) {
+            pushToolContent(runToolCall(call));
+        }
+        removeUselessObjects(base);
 
-    stringReply = reply["message"]["content"].get<std::string>();
-    remainingIterations -= 1;
-  }
-  return stringReply;
+        stringReply = reply["message"]["content"].get<std::string>();
+        remainingIterations -= 1;
+    }
+    return stringReply;
 }
