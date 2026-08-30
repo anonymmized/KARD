@@ -1,6 +1,8 @@
 #pragma once
 
 #include "contracts/IBrain.hpp"
+#include "brain/ToolRegistry.hpp"
+#include "ModelAnswer.hpp"
 
 #include <atomic>
 #include <cpr/cpr.h>
@@ -9,19 +11,10 @@
 
 constexpr int MAX_TOOL_ITERATIONS = 5;
 
-struct ModelAnswer {
-    std::string plainAnswer;
-    std::string cpuUsage;
-    std::string ramUsage;
-    std::string diskSpace;
-    std::string temp;
-    std::string dockerStatus;
-    std::string dockerIsRunning;
-    std::string dockerList;
-};
-
 class OllamaBrain : public IBrain {
     private:
+        ModelAnswer modelAnswer;
+        ToolRegistry toolRegistry;
         std::string url;
         std::atomic<bool> &cancelRequesting;
         std::vector<nlohmann::json> base;
@@ -33,7 +26,10 @@ class OllamaBrain : public IBrain {
         void pushToolContent(const std::string &content);
 
     public:
-        OllamaBrain(std::atomic<bool> &_cancelRequesting) : cancelRequesting(_cancelRequesting) {
+        OllamaBrain(std::atomic<bool> &_cancelRequesting) 
+            : modelAnswer{},
+              toolRegistry(&modelAnswer),
+              cancelRequesting(_cancelRequesting) {
             config = uploadConfig();
             url = config["url"];
         }

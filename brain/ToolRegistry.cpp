@@ -44,7 +44,7 @@ std::string pushAllContent(const std::string &toolName) {
 }
 } // namespace
 
-int parsePeriod(const std::string &period) {
+int ToolRegistry::parsePeriod(const std::string &period) {
   if (period.empty()) {
     return SEC_IN_HOUR;
   }
@@ -67,7 +67,7 @@ int parsePeriod(const std::string &period) {
   return timeNumber;
 }
 
-std::string runToolCall(const nlohmann::json &call) {
+std::string ToolRegistry::runToolCall(const nlohmann::json &call) {
    std::string answerToPush;
    std::string toolName = call["function"]["name"];
    if (toolName == "summarize_health") {
@@ -90,15 +90,23 @@ std::string runToolCall(const nlohmann::json &call) {
     } else {
         answerToPush = pushAllContent(toolName);
     }
+    updateModelAnswer(toolName, answerToPush);
     return answerToPush;
 }
 
-void removeUselessObjects(std::vector<nlohmann::json> &base) {
+void ToolRegistry::removeUselessObjects(std::vector<nlohmann::json> &base) {
     while (base.size() > 20) {
         base.erase(base.begin());
     }
 
     while (!base.empty() && base.front()["role"] != "user") {
         base.erase(base.begin());
+    }
+}
+
+void ToolRegistry::updateModelAnswer(const std::string& toolName, const std::string& toolState) {
+    auto toolNameInField = fields.find(toolName);
+    if (toolNameInField != fields.end()) {
+        *toolNameInField->second = toolState;
     }
 }

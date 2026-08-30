@@ -69,16 +69,20 @@ std::string OllamaBrain::ask(const std::string &request) {
         auto reply = nlohmann::json::parse(resp.text);
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) {
-            return reply["message"]["content"].get<std::string>();
+            stringReply = reply["message"]["content"].get<std::string>();
+            modelAnswer.plainAnswer = stringReply;
+            return stringReply;
         }
 
         for (const auto &call : reply["message"]["tool_calls"]) {
-            pushToolContent(runToolCall(call));
+            std::string toolState = toolRegistry.runToolCall(call);
+            pushToolContent(toolState);
         }
-        removeUselessObjects(base);
+        toolRegistry.removeUselessObjects(base);
 
         stringReply = reply["message"]["content"].get<std::string>();
         remainingIterations -= 1;
     }
+    modelAnswer.plainAnswer = stringReply;
     return stringReply;
 }
