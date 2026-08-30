@@ -42,6 +42,7 @@ void OllamaBrain::pushToolContent(const std::string &content) {
 }
 
 BrainAnswer OllamaBrain::ask(const std::string &request) {
+    brainAnswer = {};
     base.push_back({{"role", "user"}, {"content", request}});
     int remainingIterations = MAX_TOOL_ITERATIONS;
     std::string stringReply;
