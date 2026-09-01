@@ -5,6 +5,38 @@
 #include <string>
 #include <thread>
 
+namespace {
+    struct MetricDescriptor {
+        std::string_view title;
+        std::string BrainAnswer::* field;
+    };
+
+    const std::array metrics = {
+        MetricDescriptor{"CPU", &BrainAnswer::cpuUsage},
+        MetricDescriptor{"RAM", &BrainAnswer::ramUsage},
+        MetricDescriptor{"Disk", &BrainAnswer::diskSpace},
+        MetricDescriptor{"Uptime", &BrainAnswer::uptime},
+        MetricDescriptor{"Temperature", &BrainAnswer::temp},
+        MetricDescriptor{"Docker", &BrainAnswer::dockerStatus},
+        MetricDescriptor{"Running containers", &BrainAnswer::dockerIsRunning},
+        MetricDescriptor{"Containers", &BrainAnswer::dockerList},
+    };
+}
+
+void TerminalOutput::showAnswer(const BrainAnswer& brainAnswer) {
+    bool hasMetrics = false;
+    for (const auto& metric : metrics) {
+        const std::string& toolValue = brainAnswer.*(metric.field);
+        if (!toolValue.empty()) {
+            hasMetrics = true;
+            show(std::string(metric.title) + ": " + toolValue);
+        }
+    }
+    if (!hasMetrics) {
+        show(brainAnswer.plainAnswer);
+    }
+}
+
 void TerminalOutput::show(const std::string& text) {
     if (!setup.isInteractive()) {
         std::cout << text << '\n' << std::flush;
@@ -65,4 +97,8 @@ void CompositeOutput::stopThinking() {
 void CompositeOutput::showUserText(const std::string& text) {
     terminalOutputLink.showUserText(text);
     voiceOutputLink.showUserText(text);
+}
+
+void CompositeOutput::showAnswer(const BrainAnswer& brainAnswer) {
+    terminalOutputLink.showAnswer(brainAnswer);
 }

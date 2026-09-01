@@ -1,15 +1,15 @@
 #pragma once 
 
 #include <string>
+#include <vector>
+
+struct Metric {
+    std::string name;
+    std::string value;
+    std::string unit;
+};
 
 struct BrainAnswer {
-    std::string plainAnswer;
-    std::string cpuUsage;
-    std::string ramUsage;
-    std::string diskSpace;
-    std::string uptime;
-    std::string temp;
-    std::string dockerStatus;
-    std::string dockerIsRunning;
-    std::string dockerList;
+    std::string textAnswer;
+    std::vector<Metric> metrics;
 };

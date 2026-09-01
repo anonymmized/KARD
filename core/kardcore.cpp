@@ -31,7 +31,7 @@ void KardCore::run() {
     interfaces.output.stopThinking();
 
     if (!cancelRequesting) {
-      interfaces.output.show(brainAnswer.plainAnswer);
+      interfaces.output.showAnswer(brainAnswer);
     }
   }
 }

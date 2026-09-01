@@ -24,6 +24,7 @@ class TerminalOutput : public IOutput {
         TerminalOutput(TerminalSetup& _setup, std::atomic<bool> &_cancelRequesting, Render& _render)
             : setup(_setup), cancelRequesting(_cancelRequesting), render(_render) {}
         void show(const std::string& text) override;
+        void showAnswer(const BrainAnswer& brainAnswer) override;
         void startThinking() override;
         void stopThinking() override;
         void showUserText(const std::string& text) override;
@@ -37,6 +38,7 @@ class CompositeOutput : public IOutput {
         CompositeOutput(IOutput& terminalOutput, IOutput& voiceOutput) 
             : terminalOutputLink(terminalOutput), voiceOutputLink(voiceOutput) {}
         void show(const std::string& text) override;
+        void showAnswer(const BrainAnswer& brainAnswer) override;
         void startThinking() override;
         void stopThinking() override;
         void showUserText(const std::string& text) override;
