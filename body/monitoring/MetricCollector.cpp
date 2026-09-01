@@ -1,58 +1,61 @@
-#include "brain/MetricController.hpp"
+#include "body/monitoring/MetricCollector.hpp"
 
 #include "body/monitoring/dockerMetrics.hpp"
 #include "body/monitoring/monitor.hpp"
 
-Metric Collector::collectCpu() const {
-    Metric cpu = {"get_cpu", std::to_string(getCpuUsege()), "%"};
-    return cpu;
+std::vector<Metric> MetricCollector::collectCpu() const {
+    Metric cpu = {"get_cpu", std::to_string(getCpuUsage()), "%"};
+    return {cpu};
 }
 
-Metric Collector::collectRam() const {
+std::vector<Metric> MetricCollector::collectRam() const {
     Metric ram = {"get_ram", std::to_string(getRamUsage()), "%"};
-    return ram;
+    return {ram};
 }
 
-Metric Collector::collectDisk() const {
+std::vector<Metric> MetricCollector::collectDisk() const {
     Metric disk = {"get_disk", getDiskSpace(), ""};
-    return disk;
+    return {disk};
 }
 
-Metric Collector::collectUptime() const {
+std::vector<Metric> MetricCollector::collectUptime() const {
     Metric uptime = {"get_uptime", getUptime(), ""};
-    return uptime;
+    return {uptime};
 }
 
-Metric Collector::collectTemp() const {
+std::vector<Metric> MetricCollector::collectTemp() const {
     Metric temp = {"get_temp", std::to_string(getTemp()), "celsius"};
-    return temp;
+    return {temp};
 }
 
-Metric Collector::collectDockerStatus() const {
+std::vector<Metric> MetricCollector::collectDockerStatus() const {
     Metric dockerStatus = {"get_docker_status", checkIfDockerIsRunning(), ""};
-    return dockerStatus;
+    return {dockerStatus};
 }
 
-Metric Collector::collectDockerRunningState() const {
+std::vector<Metric> MetricCollector::collectDockerRunningState() const {
     Metric dockerRunningState = {"get_docker_running", getNumOfRunningContainers(), ""};
-    return dockerRunningState;
+    return {dockerRunningState};
 }
 
-Metric Collector::collectDockerList() const {
+std::vector<Metric> MetricCollector::collectDockerList() const {
     Metric dockerList = {"get_docker_list", getContainersList(), ""};
-    return dockerList;
+    return {dockerList};
 }
 
-std::vector<Metric> Collector::collectAll() const {
+std::vector<Metric> MetricCollector::collectAll() const {
     std::vector<Metric> allMetrics = {};
-    allMetrics.push_back(collectCpu());
-    allMetrics.push_back(collectRam());
-    allMetrics.push_back(collectDisk());
-    allMetrics.push_back(collectUptime());
-    allMetrics.push_back(collectTemp());
-    allMetrics.push_back(collectDockerStatus());
-    allMetrics.push_back(collectDockerRunningState());
-    allMetrics.push_back(collectDockerList());
+    auto append = [&allMetrics](const std::vector<Metric>& metrics) {
+        allMetrics.insert(allMetrics.end(), metrics.begin(), metrics.end());
+    };
+    append(collectCpu());
+    append(collectRam());
+    append(collectDisk());
+    append(collectUptime());
+    append(collectTemp());
+    append(collectDockerStatus());
+    append(collectDockerRunningState());
+    append(collectDockerList());
     return allMetrics;
 }
 

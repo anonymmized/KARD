@@ -41,6 +41,24 @@ void OllamaBrain::pushToolContent(const std::string &content) {
     base.push_back({{"role", "tool"}, {"content", content}});
 }
 
+std::string OllamaBrain::serializeToolResult(const ToolResult& toolResult) {
+    if (!toolResult.text.empty()) {
+        return toolResult.text;
+    }
+    std::string toolContent;
+    for (const Metric& metric : toolResult.metrics) {
+        toolContent += metric.name;
+        toolContent += ": ";
+        toolContent += metric.value;
+        if (!metric.unit.empty()) {
+            toolContent += " ";
+            toolContent += metric.unit;
+        }
+        toolContent += "\n";
+    }
+    return toolContent;
+}
+
 BrainAnswer OllamaBrain::ask(const std::string &request) {
     brainAnswer = {};
     base.push_back({{"role", "user"}, {"content", request}});
@@ -48,7 +66,7 @@ BrainAnswer OllamaBrain::ask(const std::string &request) {
     std::string stringReply;
     while (remainingIterations != 0) {
         if (needToStop()) {
-            brainAnswer.plainAnswer = "";
+            brainAnswer.textAnswer = "";
             return brainAnswer;
         }
         nlohmann::json body = getBody();
@@ -61,12 +79,12 @@ BrainAnswer OllamaBrain::ask(const std::string &request) {
         }));
 
         if (resp.status_code != 200) {
-            brainAnswer.plainAnswer = "It seems an error)\n";
+            brainAnswer.textAnswer = "It seems an error)\n";
             return brainAnswer;
         }
 
         if (needToStop()) {
-            brainAnswer.plainAnswer = "";
+            brainAnswer.textAnswer = "";
             return brainAnswer;
         }
 
@@ -74,19 +92,20 @@ BrainAnswer OllamaBrain::ask(const std::string &request) {
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) {
             stringReply = reply["message"]["content"].get<std::string>();
-            brainAnswer.plainAnswer = stringReply;
+            brainAnswer.textAnswer = stringReply;
             return brainAnswer;
         }
 
         for (const auto &call : reply["message"]["tool_calls"]) {
-            std::string toolState = toolRegistry.runToolCall(call);
-            pushToolContent(toolState);
+            ToolResult toolResult = toolRegistry.runToolCall(call);
+            std::string toolContent = serializeToolResult(toolResult);
+            pushToolContent(toolContent);
         }
         toolRegistry.removeUselessObjects(base);
 
         stringReply = reply["message"]["content"].get<std::string>();
         remainingIterations -= 1;
     }
-    brainAnswer.plainAnswer = stringReply;
+    brainAnswer.textAnswer = stringReply;
     return brainAnswer;
 }

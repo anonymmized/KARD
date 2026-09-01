@@ -5,35 +5,17 @@
 #include <string>
 #include <thread>
 
-namespace {
-    struct MetricDescriptor {
-        std::string_view title;
-        std::string BrainAnswer::* field;
-    };
-
-    const std::array metrics = {
-        MetricDescriptor{"CPU", &BrainAnswer::cpuUsage},
-        MetricDescriptor{"RAM", &BrainAnswer::ramUsage},
-        MetricDescriptor{"Disk", &BrainAnswer::diskSpace},
-        MetricDescriptor{"Uptime", &BrainAnswer::uptime},
-        MetricDescriptor{"Temperature", &BrainAnswer::temp},
-        MetricDescriptor{"Docker", &BrainAnswer::dockerStatus},
-        MetricDescriptor{"Running containers", &BrainAnswer::dockerIsRunning},
-        MetricDescriptor{"Containers", &BrainAnswer::dockerList},
-    };
-}
 
 void TerminalOutput::showAnswer(const BrainAnswer& brainAnswer) {
-    bool hasMetrics = false;
-    for (const auto& metric : metrics) {
-        const std::string& toolValue = brainAnswer.*(metric.field);
-        if (!toolValue.empty()) {
-            hasMetrics = true;
-            show(std::string(metric.title) + ": " + toolValue);
-        }
+    if (!brainAnswer.textAnswer.empty()) {
+        show(brainAnswer.textAnswer);
     }
-    if (!hasMetrics) {
-        show(brainAnswer.plainAnswer);
+    for (const Metric& metric : brainAnswer.metrics) {
+        std::string line = metric.name + ": " + metric.value;
+        if (!metric.unit.empty()) {
+            line += " " + metric.unit;
+        }
+        show (line);
     }
 }
 

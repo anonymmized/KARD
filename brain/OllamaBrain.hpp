@@ -23,11 +23,10 @@ class OllamaBrain : public IBrain {
         nlohmann::json collectAllMessages(const std::string &systemPrompt);
         bool needToStop();
         void pushToolContent(const std::string &content);
-
+        std::string serializeToolResult(const ToolResult& toolResult);
     public:
         OllamaBrain(std::atomic<bool> &_cancelRequesting) 
             : brainAnswer{},
-              toolRegistry(&brainAnswer),
               cancelRequesting(_cancelRequesting) {
             config = uploadConfig();
             url = config["url"];
