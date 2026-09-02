@@ -45,18 +45,13 @@ std::string OllamaBrain::serializeToolResult(const ToolResult& toolResult) {
     if (!toolResult.text.empty()) {
         return toolResult.text;
     }
-    std::string toolContent;
+
+    nlohmann::json states = nlohmann::json::object();
     for (const Metric& metric : toolResult.metrics) {
-        toolContent += metric.name;
-        toolContent += ": ";
-        toolContent += metric.value;
-        if (!metric.unit.empty()) {
-            toolContent += " ";
-            toolContent += metric.unit;
-        }
-        toolContent += "\n";
+        states[metric.name] = metricStateToString(metric.state);
     }
-    return toolContent;
+
+    return nlohmann::json{{"current_metric_states", states}}.dump();
 }
 
 BrainAnswer OllamaBrain::ask(const std::string &request) {
@@ -91,13 +86,13 @@ BrainAnswer OllamaBrain::ask(const std::string &request) {
         auto reply = nlohmann::json::parse(resp.text);
         base.push_back(reply["message"]);
         if (!reply["message"].contains("tool_calls")) {
-            stringReply = reply["message"]["content"].get<std::string>();
-            brainAnswer.textAnswer = stringReply;
+            brainAnswer.textAnswer = reply["message"]["content"].get<std::string>();
             return brainAnswer;
         }
 
-        for (const auto &call : reply["message"]["tool_calls"]) {
+        for (const auto& call : reply["message"]["tool_calls"]) {
             ToolResult toolResult = toolRegistry.runToolCall(call);
+            brainAnswer.metrics.insert(brainAnswer.metrics.end(), toolResult.metrics.begin(), toolResult.metrics.end());
             std::string toolContent = serializeToolResult(toolResult);
             pushToolContent(toolContent);
         }

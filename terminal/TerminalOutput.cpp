@@ -4,19 +4,58 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <unordered_map>
 
+namespace {
+const std::unordered_map<std::string, std::string> METRIC_TITLES = {
+    {"get_cpu", "CPU"},
+    {"get_ram", "RAM"},
+    {"get_disk", "Disk"},
+    {"get_uptime", "Uptime"},
+    {"get_temp", "Temperature"},
+    {"get_network", "Network latency"},
+    {"get_docker_status", "Docker"},
+    {"get_docker_running", "Running containers"},
+    {"get_docker_list", "Containers"}
+};
+
+std::string metricTitle(const std::string& name) {
+    const auto title = METRIC_TITLES.find(name);
+    return title == METRIC_TITLES.end() ? name : title->second;
+}
+
+std::string formatMetric(const Metric& metric) {
+    std::string line = "- " + metricTitle(metric.name) + ": " + metric.value;
+
+    if (!metric.unit.empty()) {
+        line += metric.unit == "%" ? metric.unit : " " + metric.unit;
+    }
+
+    if (metric.state != MetricState::Unavailable) {
+        line += " (";
+        line += metricStateToString(metric.state);
+        line += ")";
+    }
+
+    return line;
+}
+} // namespace
 
 void TerminalOutput::showAnswer(const BrainAnswer& brainAnswer) {
     if (!brainAnswer.textAnswer.empty()) {
         show(brainAnswer.textAnswer);
     }
-    for (const Metric& metric : brainAnswer.metrics) {
-        std::string line = metric.name + ": " + metric.value;
-        if (!metric.unit.empty()) {
-            line += " " + metric.unit;
-        }
-        show (line);
+
+    if (brainAnswer.metrics.empty()) {
+        return;
     }
+
+    std::string metricsBlock = "Metrics:\n";
+    for (const Metric& metric : brainAnswer.metrics) {
+        metricsBlock += formatMetric(metric) + "\n";
+    }
+    metricsBlock.pop_back();
+    show(metricsBlock);
 }
 
 void TerminalOutput::show(const std::string& text) {

@@ -84,13 +84,16 @@ ToolResult ToolRegistry::runToolCall(const nlohmann::json &call) {
     if (toolName == "get_network") {
         const double networkAnswerTime = getTcpProbe(IP_TO_PING, HTTPS_PORT);
         if (networkAnswerTime < 0) {
-            return ToolResult{{}, "network unreachable"};
+            Metric networkMetric{"get_network", "unreachable", "",
+                                 MetricState::Unavailable};
+            return ToolResult{{networkMetric}, ""};
         }
+        std::string networkAnswerTimeStr = std::to_string(networkAnswerTime);
+        Metric networkMetric{"get_network", networkAnswerTimeStr, "ms",
+                             MetricState::Normal};
 
-        Metric networkMetrics{"get_network", std::to_string(networkAnswerTime), "ms"};
-
-        appendSnapshot("get_network", std::to_string(networkAnswerTime));
-        return ToolResult{{networkMetrics}, ""};
+        appendSnapshot("get_network", networkAnswerTimeStr);
+        return ToolResult{{networkMetric}, ""};
     } 
     if (handlers.find(toolName) == handlers.end()){
         return ToolResult{{}, TOOL_NOT_EXIST};
@@ -107,4 +110,3 @@ void ToolRegistry::removeUselessObjects(std::vector<nlohmann::json> &base) {
         base.erase(base.begin());
     }
 }
-
