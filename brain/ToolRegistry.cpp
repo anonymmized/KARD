@@ -13,38 +13,41 @@
 #include <vector>
 
 namespace {
-struct ToolHandler {
-  std::function<std::string()> functionToRun;
-  std::string prefix;
-  bool loadSnapshot;
+    using CollectorMethod = std::vector<Metric> (MetricCollector::*)() const;
+    struct ToolHandler {
+        CollectorMethod collectorMethod;
+        bool loadSnapshot;
 };
 
 static const std::unordered_map<std::string, ToolHandler> handlers = {
-    {"get_cpu", {[] { return std::to_string(getCpuUsage()); }, "cpu_usage_percent: ", true}},
-    {"get_ram", {[] { return std::to_string(getRamUsage()); }, "ram_used_percent: ", true}},
-    {"get_disk", {[] { return getDiskSpace(); }, "", true}},
-    {"get_uptime", {[] { return getUptime(); }, "uptime: ", true}},
-    {"get_all", {[] { return getAllMetrics(); }, "", false}},
-    {"get_temp", {[] { return std::to_string(getTemp()); }, "temperature_celsius: ", true}},
-    {"get_docker_status", {[] { return checkIfDockerIsRunning(); }, "", false}},
-    {"get_docker_running", {[] { return getNumOfRunningContainers(); }, "", false}},
-    {"get_docker_list", {[] { return getContainersList(); }, "", false}}};
+    {"get_cpu", {&MetricCollector::collectCpu, true}},
+    {"get_ram", {&MetricCollector::collectRam, true}},
+    {"get_disk", {&MetricCollector::collectDisk, true}},
+    {"get_uptime", {&MetricCollector::collectUptime, true}},
+    {"get_all", {&MetricCollector::collectAll, false}},
+    {"get_temp", {&MetricCollector::collectTemp, true}},
+    {"get_docker_status", {&MetricCollector::collectDockerStatus, false}},
+    {"get_docker_running", {&MetricCollector::collectDockerRunningState, false}},
+    {"get_docker_list", {&MetricCollector::collectDockerList, false}}};
+} //namespace
 
-std::string pushAllContent(const std::string &toolName) {
-    auto toolInMap = handlers.find(toolName);
-    if (toolInMap == handlers.end()) {
-        return TOOL_NOT_EXIST;
-    }
+std::vector<Metric> ToolRegistry::executeMetricTool(const std::string &toolName) {
+    const ToolHandler& handler = handlers.at(toolName);
+    std::vector<Metric> metrics = (metricCollector.*handler.collectorMethod)();
 
-    std::string result = toolInMap->second.functionToRun();
-    if (toolInMap->second.loadSnapshot) {
-        appendSnapshot(toolName, result);
+    if (handler.loadSnapshot) {
+        saveSnapshots(metrics);
     }
-    return toolInMap->second.prefix + result;
+    return metrics;
 }
-} // namespace
 
-int parsePeriod(const std::string &period) {
+void ToolRegistry::saveSnapshots(const std::vector<Metric>& metrics) {
+    for (const Metric& metric : metrics) {
+        appendSnapshot(metric.name, metric.value);
+    }
+}
+
+int ToolRegistry::parsePeriod(const std::string &period) {
   if (period.empty()) {
     return SEC_IN_HOUR;
   }
@@ -67,33 +70,38 @@ int parsePeriod(const std::string &period) {
   return timeNumber;
 }
 
-std::string runToolCall(const nlohmann::json &call) {
-   std::string answerToPush;
-   std::string toolName = call["function"]["name"];
-   if (toolName == "summarize_health") {
-        auto arguments = call["function"]["arguments"];
+ToolResult ToolRegistry::runToolCall(const nlohmann::json &call) {
+    std::string toolName = call["function"]["name"].get<std::string>();
+    if (toolName == "summarize_health") {
+        nlohmann::json arguments = call["function"]["arguments"];
         if (arguments.is_string()) {
             arguments = nlohmann::json::parse(arguments.get<std::string>());
         }
-        std::string period = arguments.value("period", "1h");
-        int hours = parsePeriod(period);
-        answerToPush = summarizeHealth(hours);
-    } else if (toolName == "get_network") {
-        double networkAnswerTime = getTcpProbe(IP_TO_PING, HTTPS_PORT);
-        if (networkAnswerTime >= 0) {
-            appendSnapshot("get_network", std::to_string(networkAnswerTime));
+        const std::string period = arguments.value("period", "1h");
+        const int periodSeconds = parsePeriod(period);
+        return ToolResult{{}, summarizeHealth(periodSeconds)};
+    } 
+    if (toolName == "get_network") {
+        const double networkAnswerTime = getTcpProbe(IP_TO_PING, HTTPS_PORT);
+        if (networkAnswerTime < 0) {
+            Metric networkMetric{"get_network", "unreachable", "",
+                                 MetricState::Unavailable};
+            return ToolResult{{networkMetric}, ""};
         }
-        answerToPush =
-            (networkAnswerTime < 0)
-                ? "network unreachable"
-                : "network reachable, rtt_ms: " + std::to_string(networkAnswerTime);
-    } else {
-        answerToPush = pushAllContent(toolName);
+        std::string networkAnswerTimeStr = std::to_string(networkAnswerTime);
+        Metric networkMetric{"get_network", networkAnswerTimeStr, "ms",
+                             MetricState::Normal};
+
+        appendSnapshot("get_network", networkAnswerTimeStr);
+        return ToolResult{{networkMetric}, ""};
+    } 
+    if (handlers.find(toolName) == handlers.end()){
+        return ToolResult{{}, TOOL_NOT_EXIST};
     }
-    return answerToPush;
+    return ToolResult{executeMetricTool(toolName), ""};
 }
 
-void removeUselessObjects(std::vector<nlohmann::json> &base) {
+void ToolRegistry::removeUselessObjects(std::vector<nlohmann::json> &base) {
     while (base.size() > 20) {
         base.erase(base.begin());
     }

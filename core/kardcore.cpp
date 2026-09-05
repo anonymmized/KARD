@@ -27,11 +27,11 @@ void KardCore::run() {
     }
     interfaces.output.showUserText(userText);
     interfaces.output.startThinking();
-    std::string ans = interfaces.brain.ask(userText);
+    BrainAnswer brainAnswer = interfaces.brain.ask(userText);
     interfaces.output.stopThinking();
 
     if (!cancelRequesting) {
-      interfaces.output.show(ans);
+      interfaces.output.showAnswer(brainAnswer);
     }
   }
 }

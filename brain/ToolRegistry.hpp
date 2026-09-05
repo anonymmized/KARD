@@ -1,6 +1,7 @@
 #pragma once
 
-#include "brain/OllamaBrain.hpp"
+#include "contracts/BrainAnswer.hpp"
+#include "body/monitoring/MetricCollector.hpp"
 
 #include <string>
 #include <vector>
@@ -11,17 +12,18 @@ constexpr int HTTPS_PORT = 443;
 
 inline const std::string TOOL_NOT_EXIST = "There is no tool like this.";
 
-ModelAnswer& modelAnswer;
+struct ToolResult {
+    std::vector<Metric> metrics;
+    std::string text;
+};
 
 class ToolRegistry {
     private:
-        ModelAnswer& modelAnswer;
-    public:
+        MetricCollector metricCollector;
         int parsePeriod(const std::string& period);
-        std::string runToolCall(const nlohmann::json& call);
+        std::vector<Metric> executeMetricTool(const std::string& toolName);
+        void saveSnapshots(const std::vector<Metric>& metrics);
+    public:
+        ToolResult runToolCall(const nlohmann::json& call);
         void removeUselessObjects(std::vector<nlohmann::json>& base);
 };
-
-int parsePeriod(const std::string& period);
-std::string runToolCall(const nlohmann::json& call);
-void removeUselessObjects(std::vector<nlohmann::json>& base);
